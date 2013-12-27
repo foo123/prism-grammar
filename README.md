@@ -7,7 +7,7 @@ A simple and light-weight ( ~ 15kB minified) [Prism](https://github.com/LeaVerou
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
-
+__IN PROGRESS DO NOT USE__
 
 ###Contents
 
@@ -27,7 +27,7 @@ to generate prism-compatible syntax-highlighters from a grammar specification in
 * Grammar includes: **Style Model** , **Lex Model** and **Syntax Model** (optional), plus a couple of *settings* (see examples)
 * Grammar **specification can be minimal** (defaults will be used) (see example grammars)
 * Grammar Syntax Model can enable highlight in a more context-specific way, plus detect possible *syntax errors*
-* Grammar Syntax Model can contain *recursive references* (see /test/grammar-js-recursion.html)
+* Grammar Syntax Model can contain *recursive references*
 * Generated highlighters are **optimized for speed and size**
 
 
@@ -37,19 +37,3 @@ See working examples under [/test](/test) folder.
 
 
 ###Other Examples:
-
-
-![js-grammar](/test/grammar-js.png)
-
-
-![js-recursive-grammar](/test/grammar-js-recursion.png)
-
-
-![css-grammar](/test/grammar-css.png)
-
-
-![python-grammar](/test/grammar-python.png)
-
-
-![php-grammar](/test/grammar-php.png)
-
