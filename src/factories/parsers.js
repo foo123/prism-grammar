@@ -22,10 +22,8 @@
             Tokens: null,
 
             // Prism compatible
-            tokenize: function(code, tag) {
-                
+            tokenize: function(code) {
                 code = code || "";
-                tag = tag || 'span';
                 var lines = code.split(/\r\n|\r|\n/g), l = lines.length+1, i;
                 var tokens = [], states = new Array(l);
                 states[0] = null;
@@ -37,22 +35,10 @@
                     tokens = tokens.concat(data.tokens);
                     tokens.push("\n");
                 }
-                
-                tokens = tokens.map(function(t){
-                    if ( t.type && t.content )
-                    {
-                        var classes = ['token', t.type];
-                        return '<' + tag + ' class="' + classes.join(' ') + '" ' /*+ attributes*/ + '>' + t.content + '</' + tag + '>';
-                    }
-                    else
-                    {
-                        return t.content ? t.content : ''+t;
-                    }
-                }).join('');
-                
                 return tokens;
             },
             
+            // Prism compatible
             getLineTokens: function(line, state, row) {
                 
                 var i, rewind, rewind2, ci,
@@ -64,7 +50,6 @@
                 prismTokens = []; 
                 stream = new ParserStream( line );
                 state = (state) ? state.clone( ) : new ParserState( );
-                state.l = 1+row;
                 stack = state.stack;
                 token = { type: null, content: "" };
                 type = null;
@@ -73,7 +58,14 @@
                 {
                     rewind = 0;
                     
-                    if ( type && type !== token.type )
+                    if ( DEFAULT == type || ERROR == type)
+                    {
+                        if ( token.type ) prismTokens.push( token );
+                        prismTokens.push( stream.cur() );
+                        token = { type: null, content: "" };
+                        stream.sft();
+                    }
+                    else if ( type && type !== token.type )
                     {
                         if ( token.type ) prismTokens.push( token );
                         token = { type: type, content: stream.cur() };
@@ -194,7 +186,12 @@
                     state.r = type = DEFAULT;
                 }
                 
-                if ( type && type !== token.type )
+                if ( DEFAULT == type || ERROR == type)
+                {
+                    if ( token.type ) prismTokens.push( token );
+                    prismTokens.push( stream.cur() );
+                }
+                else if ( type && type !== token.type )
                 {
                     if ( token.type ) prismTokens.push( token );
                     prismTokens.push( { type: type, content: stream.cur() } );
@@ -214,12 +211,10 @@
             return new PrismParser(grammar, LOCALS);
         },
         
-        getMode = function(grammar, DEFAULT) {
+        getMode = function(grammar) {
             
             var LOCALS = { 
-                    // default return code for skipped or not-styled tokens
-                    // 'text' should be used in most cases
-                    DEFAULT: DEFAULT || DEFAULTSTYLE,
+                    DEFAULT: DEFAULTSTYLE,
                     ERROR: DEFAULTERROR
                 }
             ;
@@ -228,34 +223,28 @@
             grammar = parseGrammar( grammar );
             //console.log(grammar);
             
-            var parser = getParser( grammar, LOCALS );
-            var isHooked = 0, _hooks = {}, _language, _Prism;
-            _hooks['before-highlight'] = function(env) {
-                // use the custom parser for the grammar to highlight
-                // save current code in temp variable
-                // set current code to empty
-                // so as to save additional highlight work
-                // hook only if the language matches
-                //console.log(env.language);
-                if ( _language == env.language )
-                {
-                    //env._code = env.code;
-                    //env.code = "";
-                    //console.log(env.code);
-                    env.parser = parser;
-                }
-            };
-            _hooks['before-insert'] = function(env) {
-                if ( _language == env.language )
-                {
-                    env._highlightedCode = env.highlightedCode;
-                    //console.log(env._highlightedCode);
-                    // tokenize code and tarnsform to prism-compatible tokens
-                    var tokens = env.parser.tokenize(env.code, 'span');
-                    //for (var i=0; i<tokens.length; i++) tokens[i] = new _Prism.Token(tokens[i].type, tokens[i].content);
-                    env.highlightedCode = tokens; //_Prism.Token.stringify(tokens, env.language);
-                    //console.log(env.highlightedCode);
-                }
+            var parser = getParser( grammar, LOCALS ), _Prism;
+            var isHooked = 0, hookedLanguage = null, thisHooks = {
+                
+                'before-highlight' : function( env ) {
+                    // use the custom parser for the grammar to highlight
+                    // hook only if the language matches
+                    if ( hookedLanguage == env.language )
+                    {
+                        //env._code = env.code;
+                        //env.code = "";
+                        env.parser = parser;
+                    }
+                },
+                
+                'before-insert' : function( env ) {
+                    if ( hookedLanguage == env.language )
+                    {
+                        env._highlightedCode = env.highlightedCode;
+                        // tokenize code and transform to prism-compatible tokens
+                        env.highlightedCode = _Prism.Token.stringify(env.parser.tokenize(env.code), env.language);
+                    }
+                }            
             };
             
             // return a plugin that can be hooked-unhooked to Prism under certain language conditions
@@ -265,9 +254,9 @@
                     if ( !isHooked )
                     {
                         _Prism = Prism;
-                        _language = language;
-                        _Prism.hooks.add('before-highlight', _hooks['before-highlight']);
-                        _Prism.hooks.add('before-insert', _hooks['before-insert']);
+                        hookedLanguage = language;
+                        _Prism.hooks.add('before-highlight', thisHooks['before-highlight']);
+                        _Prism.hooks.add('before-insert', thisHooks['before-insert']);
                         isHooked = 1;
                     }
                 },
@@ -277,15 +266,12 @@
                     {
                         var hooks = _Prism.hooks.all;
                         
-                        for (var name in _hooks)
+                        for (var name in thisHooks)
                         {
                             if ( hooks[name] )
                             {
-                                var thishook = hooks[name].indexOf( _hooks[name] );
-                                if ( thishook > -1 )
-                                {
-                                    hooks[name].splice(thishook, 1);
-                                }
+                                var thishook = hooks[name].indexOf( thisHooks[name] );
+                                if ( thishook > -1 ) hooks[name].splice(thishook, 1);
                             }
                         }
                         isHooked = 0;

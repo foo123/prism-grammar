@@ -11,10 +11,10 @@ var css_grammar = {
         "comment":      "comment",
         "meta":         "property",
         "meta2":        "constant",
-        "atom":         "constant",
+        "atom":         "entity",
         "property":     "property",
         "element":      "atrule",
-        "url":          "constant",
+        "url":          "url",
         "operator":     "operator",
         "font":         "entity",
         "cssID":        "atrule",
@@ -22,7 +22,8 @@ var css_grammar = {
         "cssPseudoElement": "selector",
         "identifier":   "symbol",
         "number":       "number",
-        "number2":      "number",
+        "hexcolor":      "number",
+        "standard":      "important",
         "string":       "string",
         "text":         "string"
     },
@@ -43,31 +44,9 @@ var css_grammar = {
         },
         
         // some standard identifiers
-        "font" : {
-            // "simple" token type is default, if no token type
-            //"type" : "simple",
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [
-                "arial", "tahoma", "courier"
-            ]
-        },
+        "font" : [ "arial", "tahoma", "courier" ],
         
-        "standard" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [
-                "!important", "only"
-            ]
-        },
+        "standard" : [ "!important", "only" ],
         
         // css ids
         "cssID" : "RegExp::#[_A-Za-z][_A-Za-z0-9]*",
@@ -94,7 +73,7 @@ var css_grammar = {
         ],
         
         // hex colors
-        "number2" : "RegExp::#[0-9a-fA-F]+",
+        "hexcolor" : "RegExp::#[0-9a-fA-F]+",
 
         // strings
         "string" : {
@@ -109,117 +88,47 @@ var css_grammar = {
         "text" : "RegExp::[^\\(\\)\\[\\]\\{\\}'\"]+",
         
         // operators
-        "operator" : {
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [
-                "*", "+", ",", "=", ";", ">"
-            ]
-        },
-        
-        "leftBracket" : "{",
-        
-        "rightBracket" : "}",
-        
-        "leftParen" : "(",
-        
-        "rightParen" : ")",
-        
-        "assignment" : ":",
-        
-        "endAssignment" : ";",
-        
-        "commaDelim" : ",",
-        
-        "delimiter" : {
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            "combine" : true,
-            "tokens" : [ ",", "[", "]", "(", ")" ]
-        },
+        "operator" : [ "*", "+", ",", "=", ";", ">" ],        
         
         // atoms
-        "atom" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [ 
-                "block", "none", "inherit", "inline-block", "inline", 
-                "relative", "absolute", "fixed", "static",
-                "sans-serif", "serif", "monospace", "bolder", "bold", 
-                "rgba", "rgb", "underline", "wrap"
-            ]
-        },
+        "atom" : [ 
+            "block", "none", "inherit", "inline-block", "inline", 
+            "relative", "absolute", "fixed", "static",
+            "sans-serif", "serif", "monospace", "bolder", "bold", 
+            "rgba", "rgb", "underline", "wrap"
+        ],
         
         // meta
-        "meta" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [ "screen",  "handheld" ]
-        },
+        "meta" : [ "screen",  "handheld" ],
 
         // defs
-        "meta2" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : "RegExp::@[_A-Za-z][_A-Za-z0-9]*"
-        },
+        "meta2" : "RegExp::@[_A-Za-z][_A-Za-z0-9]*",
 
         // css properties
-        "property" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [ 
-                "background-color", "background-image", "background-position", "background-repeat", "background", 
-                "font-family", "font-size", "font-weight", "font", 
-                "text-decoration", "text-align",
-                "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
-                "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
-                "border-left", "border-right", "border-top", "border-bottom", "border", 
-                "position", "display" , "content", "color"
-            ]
-        },
+        "property" : [ 
+            "background-color", "background-image", "background-position", "background-repeat", "background", 
+            "font-family", "font-size", "font-weight", "font", 
+            "text-decoration", "text-align",
+            "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
+            "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
+            "border-left", "border-right", "border-top", "border-bottom", "border", 
+            "position", "display" , "content", "color"
+        ],
                               
         // css html element
-        "element" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            // combine tokens into one regular expression (using optional delimiter),
-            // by default tokens will be combined using "\\b" word-boundary, 
-            // this is usefull for speed fine-tuning the parser
-            //"combine" : "\\b",
-            "tokens" : [ 
-                "a", "p", "i",
-                "br", "hr",
-                "sup", "sub",
-                "img", "video", "audio", 
-                "canvas", "iframe",
-                "pre", "code",
-                "h1", "h2", "h3", "h4", "h5", "h6", 
-                "html", "body", 
-                "header", "footer", "nav",
-                "div", "span", "section", "strong",
-                "blockquote"
-            ]
-        },
+        "element" : [ 
+            "a", "p", "i",
+            "br", "hr",
+            "sup", "sub",
+            "img", "video", "audio", 
+            "canvas", "iframe",
+            "pre", "code",
+            "h1", "h2", "h3", "h4", "h5", "h6", 
+            "html", "body", 
+            "header", "footer", "nav",
+            "div", "span", "section", "strong",
+            "blockquote"
+        ],
         
         "url" : "url"
     },
@@ -237,25 +146,25 @@ var css_grammar = {
         // highlight url(...) as string regardless of quotes or not
         "urlDeclaration" : {
             "type" : "n-gram",
-            "tokens" : [ "url", "leftParen", "stringOrUnquotedText", "rightParen" ]
+            "tokens" : [ "url", "(", "stringOrUnquotedText", ")" ]
         },
         
         "urlDeclarationGroup" : {
             "type" : "group",
             "match" : "all",
-            "tokens" : [ "url", "leftParen", "stringOrUnquotedText", "rightParen" ]
+            "tokens" : [ "url", "(", "stringOrUnquotedText", ")" ]
         },
         
         "RHSAssignment" : {
             "type" : "group",
             "match" : "oneOrMore",
-            "tokens" : [ "urlDeclarationGroup", "atom", "font", "standard", "string", "number", "number2", "identifier", "commaDelim", "leftParen", "rightParen" ]
+            "tokens" : [ "urlDeclarationGroup", "atom", "font", "standard", "string", "number", "hexcolor", "identifier", ",", "(", ")" ]
         },
         
         "cssAssignment" : {
             "type" : "group",
             "match" : "all",
-            "tokens" : [ "property", "assignment", "RHSAssignment", "endAssignment" ]
+            "tokens" : [ "property", ":", "RHSAssignment", ";" ]
         },
         
         "cssAssignments" : {
@@ -268,7 +177,7 @@ var css_grammar = {
         "cssBlock" : {
             "type" : "n-gram",
             "tokens" : [
-                [ "leftBracket", "cssAssignments", "rightBracket" ]
+                [ "{", "cssAssignments", "}" ]
             ]
         }
     },
@@ -285,8 +194,7 @@ var css_grammar = {
         "cssPseudoElement",
         "cssBlock",
         "number",
-        "number2",
-        "string",
-        "delimiter"
+        "hexcolor",
+        "string"
     ]
 };

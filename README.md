@@ -7,8 +7,6 @@ A simple and light-weight ( ~ 15kB minified) [Prism](https://github.com/LeaVerou
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
-__IN PROGRESS DO NOT USE__
-
 ###Contents
 
 * [Todo](#todo)
@@ -35,5 +33,10 @@ __IN PROGRESS DO NOT USE__
 
 See working examples under [/test](/test) folder.
 
-
 ###Other Examples:
+
+An example for CSS:
+
+
+![css-grammar](/test/grammar-css.png)
+

@@ -52,10 +52,8 @@ Already parsed grammars are NOT re-parsed when passed through the parse method a
 __Method__: *getMode*
 
 ```javascript
-mode = PrismGrammar.getMode(grammar, [, DEFAULT]);
+mode = PrismGrammar.getMode(grammar);
 ```
 
 This is the main method which transforms a JSON grammar into a syntax-highlighter for Prism.
-DEFAULT is the default return value ("" by default) for things that are skipped or not styled
-In general there is no need to set this value, unless you need to return something else
         

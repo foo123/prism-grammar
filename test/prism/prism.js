@@ -257,7 +257,7 @@ var _ = self.Prism = {
 				}
 			}
 		}
-
+        //console.log(strarr);
 		return strarr;
 	},
 	
