@@ -13,6 +13,7 @@ to generate prism-compatible syntax-highlighters from a grammar specification in
 * [Features](#features)
 * [How To use](#how-to-use)
 * [API Reference](/api-reference.md)
+* [Grammar Reference](/grammar-reference.md)
 * [Other Examples](#other-examples)
 
 
