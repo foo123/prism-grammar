@@ -1,0 +1,61 @@
+
+
+###PrismGrammar Methods
+
+__For node with dependencies:__
+
+```javascript
+PrismGrammar = require('build/prism_grammar.js').PrismGrammar;
+// or
+PrismGrammar = require('build/prism_grammar.bundle.js').PrismGrammar;
+```
+
+__For browser with dependencies:__
+
+```html
+<script src="../build/prism_grammar.bundle.js"></script>
+<!-- or -->
+<script src="../build/classy.js"></script>
+<script src="../build/regexanalyzer.js"></script>
+<script src="../build/prism_grammar.js"></script>
+<script> // PrismGrammar.getMode(..) , etc.. </script>
+```
+
+    
+
+
+__Method__: *extend*
+
+```javascript
+extendedgrammar = PrismGrammar.extend(grammar, basegrammar1 [, basegrammar2, ..]);
+```
+
+Extend a grammar with basegrammar1, basegrammar2, etc..
+
+This way arbitrary dialects and variations can be handled more easily
+        
+
+
+__Method__: *parse*
+
+```javascript
+parsedgrammar = PrismGrammar.parse(grammar);
+```
+
+This is used internally by the PrismGrammar Class
+In order to parse a JSON grammar to a form suitable to be used by the syntax-highlight parser.
+However user can use this method to cache a parsedgrammar to be used later.
+Already parsed grammars are NOT re-parsed when passed through the parse method again
+        
+
+
+__Method__: *getMode*
+
+```javascript
+mode = PrismGrammar.getMode(grammar, [, DEFAULT]);
+```
+
+This is the main method which transforms a JSON grammar into a syntax-highlighter for Prism.
+DEFAULT is the default return value ("" by default) for things that are skipped or not styled
+In general there is no need to set this value, unless you need to return something else
+        
