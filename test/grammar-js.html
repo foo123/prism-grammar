@@ -41,6 +41,27 @@
         
         <h3>Prism: Dynamic JavaScript Grammar</h3>
 
+        
+<!--
+
+/* highlight nested code correctly with recursive grammar */
+var obj = { 
+    foo: [
+        1, 2, 3, 
+        {
+            /* while comments can be validly interleaved anywhere */
+            "foo3": { 
+                foo4: { 
+                    "foo5": {}, 
+                    foo6: {}
+                }
+            } 
+        } 
+    ]
+};
+
+-->
+
 <pre class="language-javascript"><code>
 // this is part of the PrismGrammar code itself
 
