@@ -7,6 +7,9 @@ A simple and light-weight ( ~ 15kB minified) [Prism](https://github.com/LeaVerou
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
+See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , [ace-grammar](https://github.com/foo123/ace-grammar)
+
+
 ###Contents
 
 * [Todo](#todo)
