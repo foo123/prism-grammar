@@ -7,7 +7,7 @@ var css_grammar = {
     //
     // Style model
     "Style" : {
-        // lang token type  -> prism (style) tag
+        // lang token type  -> Prism (style) tag
         "comment":      "comment",
         "meta":         "property",
         "meta2":        "constant",

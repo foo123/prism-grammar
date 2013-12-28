@@ -10,7 +10,7 @@
                 //this.Comments = grammar.Comments || {};
                 
                 this.DEF = LOC.DEFAULT;
-                this.ERR = grammar.Style.error || LOC.ERROR;
+                this.ERR = LOC.ERROR;
                 
                 this.Tokens = grammar.Parser || [];
                 this.cTokens = (grammar.cTokens.length) ? grammar.cTokens : null;
@@ -24,16 +24,16 @@
             // Prism compatible
             tokenize: function(code) {
                 code = code || "";
-                var lines = code.split(/\r\n|\r|\n/g), l = lines.length+1, i;
-                var tokens = [], states = new Array(l);
+                var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i;
+                var tokens = [], states = new Array(l+1), data;
                 states[0] = null;
                 
-                for (i=1; i<l; i++)
+                for (i=0; i<l; i++)
                 {
-                    var data = this.getLineTokens(lines[i-1], states[i-1], i-1);
-                    states[i] = data.state;
+                    data = this.getLineTokens(lines[i], states[i], i);
+                    states[i+1] = data.state;
                     tokens = tokens.concat(data.tokens);
-                    tokens.push("\n");
+                    if (i<l-1) tokens.push("\n");
                 }
                 return tokens;
             },
@@ -231,8 +231,9 @@
                     // hook only if the language matches
                     if ( hookedLanguage == env.language )
                     {
-                        //env._code = env.code;
-                        //env.code = "";
+                        // avoid double highlight work, set code to ""
+                        env._code = env.code;
+                        env.code = "";
                         env.parser = parser;
                     }
                 },
@@ -240,6 +241,9 @@
                 'before-insert' : function( env ) {
                     if ( hookedLanguage == env.language )
                     {
+                        // re-set
+                        env.code = env._code;
+                        env._code = "";
                         env._highlightedCode = env.highlightedCode;
                         // tokenize code and transform to prism-compatible tokens
                         env.highlightedCode = _Prism.Token.stringify(env.parser.tokenize(env.code), env.language);

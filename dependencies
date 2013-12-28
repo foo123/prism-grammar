@@ -32,7 +32,7 @@
 
 # do any replacements to the source (map)
 @REPLACE ={}
-    "@@VERSION@@" = "0.2"
+    "@@VERSION@@" = "0.3"
 @ # end block
 
 @OUT =
