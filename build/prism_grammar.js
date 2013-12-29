@@ -1,10 +1,9 @@
 /**
 *
 *   PrismGrammar
-*   @version: 0.3
-*   Transform a grammar specification in JSON format,
-*   into a syntax-highlighter for Prism
+*   @version: 0.3.1
 *
+*   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
 *
 **/
@@ -53,15 +52,9 @@
     }
 
 
-}( this, "PrismGrammar",
-    // dependencies
-    [
-        ["Classy", "./classy"],  ["RegExAnalyzer", "./regexanalyzer"]
-    ], 
-    // module factory
-    function( Classy, RegexAnalyzer, undef ) {
-    
-    var Class = Classy.Class;
+}( this, /* module name */ "PrismGrammar",
+    /* module dependencies */ [ ['Classy', './classy'],  ['RegExAnalyzer', './regexanalyzer'] ], 
+    /* module factory */  function( Classy, RegexAnalyzer, undef ) {
         
     //
     // parser types
@@ -139,6 +132,8 @@
             "Parser" : null
         }
     ;
+    
+    var Class = Classy.Class;
     
     var slice = Array.prototype.slice, splice = Array.prototype.splice, concat = Array.prototype.concat, 
         hasKey = Object.prototype.hasOwnProperty, toStr = Object.prototype.toString, isEnum = Object.prototype.propertyIsEnumerable,
@@ -1688,9 +1683,9 @@
     [/DOC_MARKDOWN]**/
     DEFAULTSTYLE = -1;
     DEFAULTERROR = -1;
-    var self = {
+    var self = PrismGrammar = {
         
-        VERSION : "0.3",
+        VERSION : "0.3.1",
         
         // extend a grammar using another base grammar
         /**[DOC_MARKDOWN]
@@ -1735,5 +1730,5 @@
     };
     
     // export it
-    return self;
+    return PrismGrammar;
 });

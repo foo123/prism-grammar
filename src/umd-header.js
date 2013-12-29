@@ -1,11 +1,10 @@
 /**
 *
-*   PrismGrammar
+*   @@MODULE_NAME@@
 *   @version: @@VERSION@@
-*   Transform a grammar specification in JSON format,
-*   into a syntax-highlighter for Prism
 *
-*   https://github.com/foo123/prism-grammar
+*   @@MODULE_DESC@@
+*   @@REPO_URL@@
 *
 **/
 !function ( root, name, deps, factory ) {
@@ -53,12 +52,6 @@
     }
 
 
-}( this, "PrismGrammar",
-    // dependencies
-    [
-        ["Classy", "./classy"],  ["RegExAnalyzer", "./regexanalyzer"]
-    ], 
-    // module factory
-    function( Classy, RegexAnalyzer, undef ) {
-    
-    var Class = Classy.Class;
+}( this, /* module name */ "@@MODULE_NAME@@",
+    /* module dependencies */ @@MODULE_DEPENDENCIES@@, 
+    /* module factory */  function( @@MODULE_ARGUMENTS@@ ) {
