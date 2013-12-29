@@ -52,9 +52,10 @@
     }
 
 
-}( this, /* module name */ "PrismGrammar",
-    /* module dependencies */ [ ['Classy', './classy'],  ['RegExAnalyzer', './regexanalyzer'] ], 
-    /* module factory */  function( Classy, RegexAnalyzer, undef ) {
+}(  /* current root */          this, 
+    /* module name */           "PrismGrammar",
+    /* module dependencies */   [ ['Classy', './classy'],  ['RegExAnalyzer', './regexanalyzer'] ], 
+    /* module factory */        function( Classy, RegexAnalyzer, undef ) {
         
     //
     // parser types
@@ -1729,6 +1730,6 @@
         getMode : getMode
     };
     
-    // export it
+    /* export the module "PrismGrammar" */
     return PrismGrammar;
 });
