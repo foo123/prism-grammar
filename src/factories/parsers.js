@@ -203,6 +203,9 @@
                 }
                 token = null; //{ type: null, content: "" };
                 
+                // if EOL tokenizer is left on stack, pop it now
+                if ( stack.length && T_EOL == stack[stack.length-1].tt )  stack.pop();
+                
                 return { state: state, tokens: prismTokens };
             }
         }),
