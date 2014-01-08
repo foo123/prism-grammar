@@ -1,7 +1,7 @@
 /**
 *
 *   PrismGrammar
-*   @version: 0.4
+*   @version: 0.4.1
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -1496,13 +1496,12 @@
             tokenize: function(code) {
                 code = code || "";
                 var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i;
-                var tokens = [], states = new Array(l+1), data;
-                states[0] = null;
+                var tokens = [], data;
+                data = { state: new ParserState( ), tokens: null };
                 
                 for (i=0; i<l; i++)
                 {
-                    data = this.getLineTokens(lines[i], states[i], i);
-                    states[i+1] = data.state;
+                    data = this.getLineTokens(lines[i], data.state, i);
                     tokens = tokens.concat(data.tokens);
                     if (i<l-1) tokens.push("\n");
                 }
@@ -1520,7 +1519,6 @@
                 
                 prismTokens = []; 
                 stream = new ParserStream( line );
-                state = (state) ? state.clone( ) : new ParserState( );
                 stack = state.stack;
                 token = { type: null, content: "" };
                 type = null;
@@ -1718,7 +1716,7 @@
                         // re-set
                         env.code = env._code;
                         env._code = "";
-                        env._highlightedCode = env.highlightedCode;
+                        //env._highlightedCode = env.highlightedCode;
                         // tokenize code and transform to prism-compatible tokens
                         env.highlightedCode = _Prism.Token.stringify(env.parser.tokenize(env.code), env.language);
                     }
@@ -1733,8 +1731,10 @@
                     {
                         _Prism = Prism;
                         hookedLanguage = language;
-                        _Prism.hooks.add('before-highlight', thisHooks['before-highlight']);
-                        _Prism.hooks.add('before-insert', thisHooks['before-insert']);
+                        for (var hookname in thisHooks )
+                        {
+                            _Prism.hooks.add(hookname, thisHooks[hookname]);
+                        }
                         isHooked = 1;
                     }
                 },
@@ -1744,12 +1744,12 @@
                     {
                         var hooks = _Prism.hooks.all;
                         
-                        for (var name in thisHooks)
+                        for (var hookname in thisHooks)
                         {
-                            if ( hooks[name] )
+                            if ( hooks[hookname] )
                             {
-                                var thishook = hooks[name].indexOf( thisHooks[name] );
-                                if ( thishook > -1 ) hooks[name].splice(thishook, 1);
+                                var thishook = hooks[hookname].indexOf( thisHooks[hookname] );
+                                if ( thishook > -1 ) hooks[hookname].splice(thishook, 1);
                             }
                         }
                         isHooked = 0;
@@ -1790,7 +1790,7 @@
     DEFAULTERROR = -1;
     var self = PrismGrammar = {
         
-        VERSION : "0.4",
+        VERSION : "0.4.1",
         
         // extend a grammar using another base grammar
         /**[DOC_MARKDOWN]

@@ -4,36 +4,34 @@
         
         <meta charset="utf-8">
         
-        <script src="prism/prism.js"></script>
-        <link rel="stylesheet" href="prism/themes/prism.css" data-noprefix />
+        <link rel="stylesheet" href="prism/themes/prism-coy.css" data-noprefix />
+        <link rel="stylesheet" href="prism/plugins/line-numbers/prism-line-numbers.css" data-noprefix />
         <script src="prism/prefixfree.min.js"></script>
-        <script src="../build/classy.js"></script>
-        <script src="../build/regexanalyzer.js"></script>
-        <script src="../build/prism_grammar.js"></script>
-        <script src="grammars/css.js"></script>
-        <script>
-        // <![CDATA[
-        
-        var css_mode = PrismGrammar.getMode( css_grammar );
-        css_mode.hook( Prism, "css" );
-        
-        // ]]>
-        </script>
-        
         <style type="text/css">
             body {
                 position: relative;
             }
-
-            #editor { 
-                margin: 0;
-                position: relative;
-                width: 100%;
-                height: 100%;
-                min-width:500px;
-                min-height:500px;
+            pre {
+                max-height: 30em;
+                overflow: auto;
+            }
+            pre > code.highlight {
+                outline: .4em solid red;
+                outline-offset: .4em;
+            }
+            code[class*="language"] {
+                overflow: visible;
+            }
+            pre[class*="language"] {
+                overflow: scroll;
             }
         </style>
+        <script src="prism/prism.js" data-manual ></script>
+        <script src="prism/plugins/line-numbers/prism-line-numbers.min.js"></script>
+        <script src="../build/classy.js"></script>
+        <script src="../build/regexanalyzer.js"></script>
+        <script src="../build/prism_grammar.js"></script>
+        <script src="grammars/css.js"></script>
         
         <title>Prism: Dynamic CSS Grammar Demo</title>
     </head>
@@ -41,7 +39,7 @@
         
         <h3>Prism: Dynamic CSS Grammar</h3>
 
-<pre class="language-css"><code>
+<pre class="language-css line-numbers"><code id="code">
 /* Some example CSS */
 
 @import url("something.css");
@@ -79,5 +77,14 @@ code {
 
         <p></p>
 
+        <script>
+        // <![CDATA[
+        
+        var css_mode = PrismGrammar.getMode( css_grammar );
+        css_mode.hook( Prism, "css" );
+        Prism.highlightElement( document.getElementById('code') );
+        
+        // ]]>
+        </script>
     </body>
 </html>
