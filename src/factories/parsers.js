@@ -52,6 +52,9 @@
                 token = { type: null, content: "" };
                 type = null;
                 
+                // if EOL tokenizer is left on stack, pop it now
+                if ( stack.length && T_EOL == stack[stack.length-1].tt )  stack.pop();
+                
                 while ( !stream.eol() )
                 {
                     rewind = 0;
@@ -75,11 +78,15 @@
                         stream.sft();
                     }
                     
-                    if ( stream.spc() ) 
+                    // check for non-space tokenizer before parsing space
+                    if ( !stack.length || T_NONSPACE != stack[stack.length-1].tt )
                     {
-                        state.t = T_DEFAULT;
-                        state.r = type = DEFAULT;
-                        continue;
+                        if ( stream.spc() )
+                        {
+                            state.t = T_DEFAULT;
+                            state.r = type = DEFAULT;
+                            continue;
+                        }
                     }
                     
                     while ( stack.length && !stream.eol() )
@@ -200,9 +207,6 @@
                     prismTokens.push( token );
                 }
                 token = null; //{ type: null, content: "" };
-                
-                // if EOL tokenizer is left on stack, pop it now
-                if ( stack.length && T_EOL == stack[stack.length-1].tt )  stack.pop();
                 
                 return { state: state, tokens: prismTokens };
             }

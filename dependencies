@@ -31,16 +31,16 @@
 
 @ # end block
 
+# extract header from this file
+@HEADER =
+./src/main.js
+
 # do any replacements to the source (orderedmap)
 @REPLACE =[{}]
 
-    "@@VERSION@@" = "0.4.2"
+    "@@VERSION@@" = "0.5"
     
     "@@MODULE_NAME@@" = "PrismGrammar"
-    
-    "@@MODULE_DESC@@" = "Transform a grammar specification in JSON format, into a syntax-highlighter for Prism"
-    
-    "@@REPO_URL@@" = "https://github.com/foo123/prism-grammar"
     
     "@@MODULE_DEPENDENCIES@@" = "[ ['Classy', './classy'],  ['RegExAnalyzer', './regexanalyzer'] ]"
     

@@ -1,3 +1,12 @@
+/**
+*
+*   PrismGrammar
+*   @version: @@VERSION@@
+*
+*   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
+*   https://github.com/foo123/prism-grammar
+*
+**/
     
     //
     //  Prism Grammar main class

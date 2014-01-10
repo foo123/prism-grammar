@@ -30,10 +30,10 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 ###Features
 
 * A grammar can **extend other grammars** (so arbitrary variations and dialects can be parsed more easily), Prism already supports a similar feature
-* Grammar includes: **Style Model** , **Lex Model** and **Syntax Model** (optional), plus a couple of *settings* (see examples)
+* [Grammar](/grammar-reference.md) includes: **Style Model** , **Lex Model** and **Syntax Model** (optional), plus a couple of *settings* (see examples)
 * Grammar **specification can be minimal** (defaults will be used) (see example grammars)
-* Grammar Syntax Model can enable highlight in a more context-specific way, plus detect possible *syntax errors*
-* Grammar Syntax Model can contain *recursive references*
+* [Grammar Syntax Model](/grammar-reference.md) can enable highlight in a more context-specific way, plus detect possible *syntax errors*
+* [Grammar Syntax Model](/grammar-reference.md) can contain *recursive references*
 * Generated highlighters are **optimized for speed and size**
 
 

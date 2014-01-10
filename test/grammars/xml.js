@@ -19,7 +19,10 @@ var xml_grammar = {
         "attribute":            "attr-name",
         "number":               "number",
         "hexnumber":            "number",
-        "string":               "attr-value"
+        // "-1" represents default style or unstyled
+        "string":               -1,
+        // allow block delims / interior to have different styles
+        "string.inside":        "attr-value"
     },
 
     //
