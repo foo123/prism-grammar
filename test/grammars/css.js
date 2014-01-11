@@ -166,7 +166,7 @@ var css_grammar = {
             ]
         },
         
-        "url" : "url"
+        "url" : "RegExp::url\\b"
     },
 
     //

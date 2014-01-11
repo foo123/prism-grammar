@@ -5,10 +5,6 @@
         PrismParser = Class({
             
             constructor: function(grammar, LOC) {
-                //this.LOC = LOC;
-                //this.Grammar = grammar;
-                //this.Comments = grammar.Comments || {};
-                
                 this.DEF = LOC.DEFAULT;
                 this.ERR = LOC.ERROR;
                 

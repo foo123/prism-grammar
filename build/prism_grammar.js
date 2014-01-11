@@ -1257,6 +1257,17 @@
                         
                         // provide some defaults
                         type = (tok.type) ? tokenTypes[ tok.type.toUpperCase().replace('-', '').replace('_', '') ] : T_SIMPLE;
+                        
+                        if ( (T_SIMPLE & type) && "" === tok.tokens )
+                        {
+                            // NONSPACE Tokenizer
+                            token = new SimpleToken( tokenID, "", DEFAULTSTYLE );
+                            token.tt = T_NONSPACE;
+                            // pre-cache tokenizer to handle recursive calls to same tokenizer
+                            cachedTokens[ tokenID ] = token;
+                            return token;
+                        }
+            
                         tok.tokens = make_array( tok.tokens );
                         action = tok.action || null;
                         
@@ -1465,10 +1476,6 @@
         PrismParser = Class({
             
             constructor: function(grammar, LOC) {
-                //this.LOC = LOC;
-                //this.Grammar = grammar;
-                //this.Comments = grammar.Comments || {};
-                
                 this.DEF = LOC.DEFAULT;
                 this.ERR = LOC.ERROR;
                 
@@ -1788,8 +1795,8 @@
     * ```
     *
     [/DOC_MARKDOWN]**/
-    DEFAULTSTYLE = -1;
-    DEFAULTERROR = -1;
+    DEFAULTSTYLE = "";
+    DEFAULTERROR = "";
     var self = PrismGrammar = {
         
         VERSION : "0.5",
