@@ -5,11 +5,12 @@
         PrismParser = Class({
             
             constructor: function(grammar, LOC) {
-                this.DEF = LOC.DEFAULT;
-                this.ERR = LOC.ERROR;
+                var ayto = this;
+                ayto.DEF = LOC.DEFAULT;
+                ayto.ERR = LOC.ERROR;
                 
-                this.Tokens = grammar.Parser || [];
-                this.cTokens = (grammar.cTokens.length) ? grammar.cTokens : null;
+                ayto.Tokens = grammar.Parser || [];
+                ayto.cTokens = (grammar.cTokens.length) ? grammar.cTokens : null;
             },
             
             ERR: null,
@@ -18,7 +19,7 @@
             Tokens: null,
 
             // Prism compatible
-            tokenize: function(code) {
+            parse: function(code) {
                 code = code || "";
                 var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i;
                 var tokens = [], data;
@@ -36,10 +37,10 @@
             // Prism compatible
             getLineTokens: function(line, state, row) {
                 
-                var i, rewind, rewind2, ci,
-                    tokenizer, interleavedCommentTokens = this.cTokens, tokens = this.Tokens, numTokens = tokens.length, 
+                var ayto = this, i, rewind, rewind2, ci,
+                    tokenizer, interleavedCommentTokens = ayto.cTokens, tokens = ayto.Tokens, numTokens = tokens.length, 
                     prismTokens, token, type, 
-                    stream, stack, DEFAULT = this.DEF, ERROR = this.ERR
+                    stream, stack, DEFAULT = ayto.DEF, ERROR = ayto.ERR
                 ;
                 
                 prismTokens = []; 
@@ -247,7 +248,7 @@
                         env._code = "";
                         //env._highlightedCode = env.highlightedCode;
                         // tokenize code and transform to prism-compatible tokens
-                        env.highlightedCode = _Prism.Token.stringify(env.parser.tokenize(env.code), env.language);
+                        env.highlightedCode = _Prism.Token.stringify(env.parser.parse(env.code), env.language);
                     }
                 }            
             };
