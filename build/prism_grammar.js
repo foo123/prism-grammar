@@ -1,7 +1,7 @@
 /**
 *
 *   PrismGrammar
-*   @version: 0.5
+*   @version: 0.5.1
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -436,13 +436,13 @@
         
         // Get current filename/path
         getCurrentPath = function() {
-            var file = null;
+            var file = null, path, base, scripts;
             if ( isNode ) 
             {
                 // http://nodejs.org/docs/latest/api/globals.html#globals_filename
                 // this should hold the current file in node
                 file = __filename;
-                return { path: __dirname, file: __filename };
+                return { path: __dirname, file: __filename, base: __dirname };
             }
             else if ( isWorker )
             {
@@ -453,14 +453,14 @@
             else if ( isBrowser )
             {
                 // get last script (should be the current one) in browser
-                var scripts;
+                base = document.location.href.split('#')[0].split('?')[0].split('/').slice(0, -1).join('/');
                 if ((scripts = document.getElementsByTagName('script')) && scripts.length) 
                     file = scripts[scripts.length - 1].src;
             }
             
             if ( file )
-                return { path: file.split('/').slice(0, -1).join('/'), file: file };
-            return { path: null, file: null };
+                return { path: file.split('/').slice(0, -1).join('/'), file: file, base: base };
+            return { path: null, file: null, base: null };
         },
         thisPath = getCurrentPath()
     ;
@@ -982,6 +982,12 @@
     //
     // tokenizer factories
     var
+        getError = function(tokenizer) {
+            if (T_NONSPACE == tokenizer.tt) return "NONSPACE Required";
+            else if (T_NULL == tokenizer.tt) return "EOL Required";
+            return (tokenizer.required) ? ('Token Missing "'+tokenizer.tn+'"') : ('Syntax Error "'+tokenizer.tn+'"');
+        },
+        
         SimpleToken = Class({
             
             constructor : function(name, token, style) {
@@ -1669,8 +1675,7 @@
             // Prism compatible
             parse: function(code) {
                 code = code || "";
-                var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i;
-                var tokens = [], data;
+                var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i, tokens = [], data;
                 data = { state: new ParserState( ), tokens: null };
                 
                 for (i=0; i<l; i++)
@@ -1873,8 +1878,8 @@
             grammar = parseGrammar( grammar );
             //console.log(grammar);
             
-            var parser = getParser( grammar, LOCALS ), _Prism;
-            var isHooked = 0, hookedLanguage = null, thisHooks = {
+            var parser = getParser( grammar, LOCALS ), _Prism,
+                isHooked = 0, hookedLanguage = null, thisHooks = {
                 
                 'before-highlight' : function( env ) {
                     // use the custom parser for the grammar to highlight
@@ -1940,7 +1945,7 @@
   /**
 *
 *   PrismGrammar
-*   @version: 0.5
+*   @version: 0.5.1
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -1977,7 +1982,7 @@
     DEFAULTERROR = "";
     var PrismGrammar = {
         
-        VERSION : "0.5",
+        VERSION : "0.5.1",
         
         // extend a grammar using another base grammar
         /**[DOC_MARKDOWN]

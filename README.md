@@ -3,7 +3,7 @@ prism-grammar
 
 __Transform a JSON grammar into a syntax-highlighter for Prism__
 
-A simple and light-weight ( ~ 15kB minified) [Prism](https://github.com/LeaVerou/prism) plugin
+A simple and light-weight ( ~ 17kB minified) [Prism](https://github.com/LeaVerou/prism) plugin
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 

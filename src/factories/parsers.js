@@ -21,8 +21,7 @@
             // Prism compatible
             parse: function(code) {
                 code = code || "";
-                var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i;
-                var tokens = [], data;
+                var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i, tokens = [], data;
                 data = { state: new ParserState( ), tokens: null };
                 
                 for (i=0; i<l; i++)
@@ -225,8 +224,8 @@
             grammar = parseGrammar( grammar );
             //console.log(grammar);
             
-            var parser = getParser( grammar, LOCALS ), _Prism;
-            var isHooked = 0, hookedLanguage = null, thisHooks = {
+            var parser = getParser( grammar, LOCALS ), _Prism,
+                isHooked = 0, hookedLanguage = null, thisHooks = {
                 
                 'before-highlight' : function( env ) {
                     // use the custom parser for the grammar to highlight
