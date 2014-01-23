@@ -52,27 +52,27 @@ var xml_grammar = {
             "tokens" : [
                 // meta block
                 //        start,                          end  delims
-                [ "RegExp::&lt;\\?[_a-zA-Z][\\w\\._\\-]*",   "?>" ]
+                [ "RegExp::/&lt;\\?[_a-zA-Z][\\w\\._\\-]*/",   "?>" ]
             ]
         },
         
         // tag attributes
-        "attribute" : "RegExp::[_a-zA-Z][_a-zA-Z0-9\\-]*",
+        "attribute" : "RegExp::/[_a-zA-Z][_a-zA-Z0-9\\-]*/",
         
         // numbers, in order of matching
         "number" : [
             // floats
-            "RegExp::\\d+\\.\\d*",
-            "RegExp::\\.\\d+",
+            "RegExp::/\\d+\\.\\d*/",
+            "RegExp::/\\.\\d+/",
             // integers
             // decimal
-            "RegExp::[1-9]\\d*(e[\\+\\-]?\\d+)?",
+            "RegExp::/[1-9]\\d*(e[\\+\\-]?\\d+)?/",
             // just zero
-            "RegExp::0(?![\\dx])"
+            "RegExp::/0(?![\\dx])/"
         ],
         
         // hex colors
-        "hexnumber" : "RegExp::#[0-9a-fA-F]+",
+        "hexnumber" : "RegExp::/#[0-9a-fA-F]+/",
 
         // strings
         "string" : {
@@ -91,20 +91,23 @@ var xml_grammar = {
         // "simple" token type is default, if no token type
         //"type" : "simple",
         "atom" : [
-            "RegExp::&amp;[a-zA-Z][a-zA-Z0-9]*;",
-            "RegExp::&amp;#[\\d]+;",
-            "RegExp::&amp;#x[a-fA-F\\d]+;"
+            "RegExp::/&amp;[a-zA-Z][a-zA-Z0-9]*;/",
+            "RegExp::/&amp;#[\\d]+;/",
+            "RegExp::/&amp;#x[a-fA-F\\d]+;/"
         ],
         
         // tags
-        "startTag" : "RegExp::&lt;[_a-zA-Z][_a-zA-Z0-9\\-]*",
+        "startTag" : { 
+            "expects": "closeTag",
+            "tokens": "RegExp::/&lt;[_a-zA-Z][_a-zA-Z0-9\\-]*/"
+        },
         
         "endTag" : ">",
         
         "autocloseTag" : "/>",
         
         // close tag, outdent action
-        "closeTag" : "RegExp::&lt;/[_a-zA-Z][_a-zA-Z0-9\\-]*>"
+        "closeTag" : "RegExp::#&lt;/[_a-zA-Z][_a-zA-Z0-9\\-]*>#"
     },
     
     //

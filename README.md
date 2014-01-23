@@ -90,36 +90,48 @@ var css_grammar = {
         },
         
         // some standard identifiers
-        "font" : [ "arial", "tahoma", "courier" ],
+        "font" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [
+                "arial", "tahoma", "courier"
+            ]
+        },
         
-        "standard" : [ "!important", "only" ],
+        "standard" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [
+                "!important", "only"
+            ]
+        },
         
         // css ids
-        "cssID" : "RegExp::#[_A-Za-z][_A-Za-z0-9]*",
+        "cssID" : "RegExp::/#[_A-Za-z][_A-Za-z0-9]*/",
         
         // css classes
-        "cssClass" : "RegExp::\\.[_A-Za-z][_A-Za-z0-9]*",
+        "cssClass" : "RegExp::/\\.[_A-Za-z][_A-Za-z0-9]*/",
         
-        "cssPseudoElement" : "RegExp::::?[_A-Za-z][_A-Za-z0-9]*",
+        "cssPseudoElement" : "RegExp::/::?[_A-Za-z][_A-Za-z0-9]*/",
         
         // general identifiers
-        "identifier" : "RegExp::[_A-Za-z][_A-Za-z0-9]*",
+        "identifier" : "RegExp::/[_A-Za-z][_A-Za-z0-9]*/",
         
         // numbers, in order of matching
         "number" : [
             // floats
-            "RegExp::\\d*\\.\\d+(e[\\+\\-]?\\d+)?(em|px|%|pt)?",
-            "RegExp::\\d+\\.\\d*(em|px|%|pt)?",
-            "RegExp::\\.\\d+(em|px|%|pt)?",
+            "RegExp::/\\d*\\.\\d+(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
+            "RegExp::/\\d+\\.\\d*(em|px|%|pt)?/",
+            "RegExp::/\\.\\d+(em|px|%|pt)?/",
             // integers
             // decimal
-            "RegExp::[1-9]\\d*(e[\\+\\-]?\\d+)?(em|px|%|pt)?",
+            "RegExp::/[1-9]\\d*(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
             // just zero
-            "RegExp::0(?![\\dx])(em|px|%|pt)?"
+            "RegExp::/0(?![\\dx])(em|px|%|pt)?/"
         ],
         
         // hex colors
-        "hexcolor" : "RegExp::#[0-9a-fA-F]+",
+        "hexcolor" : "RegExp::/#[0-9a-fA-F]+/",
 
         // strings
         "string" : {
@@ -127,56 +139,76 @@ var css_grammar = {
             "escape" : "\\",
             "tokens" : [
                 //  start,           end of string (can be the matched regex group ie. 1 )
-                [ "RegExp::([`'\"])", 1 ]
+                [ "RegExp::/([`'\"])/", 1 ]
             ]
         },
         
-        "text" : "RegExp::[^\\(\\)\\[\\]\\{\\}'\"]+",
+        "text" : "RegExp::/[^\\(\\)\\[\\]\\{\\}'\"]+/",
         
         // operators
-        "operator" : [ "*", "+", ",", "=", ";", ">" ],        
+        "operator" : {
+            "tokens" : [
+                "*", "+", ",", "=", ";", ">"
+            ]
+        },
         
         // atoms
-        "atom" : [ 
-            "block", "none", "inherit", "inline-block", "inline", 
-            "relative", "absolute", "fixed", "static",
-            "sans-serif", "serif", "monospace", "bolder", "bold", 
-            "rgba", "rgb", "underline", "wrap"
-        ],
+        "atom" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [ 
+                "block", "none", "inherit", "inline-block", "inline", 
+                "relative", "absolute", "fixed", "static",
+                "sans-serif", "serif", "monospace", "bolder", "bold", 
+                "rgba", "rgb", "underline", "wrap"
+            ]
+        },
         
         // meta
-        "meta" : [ "screen",  "handheld" ],
+        "meta" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [ "screen",  "handheld" ]
+        },
 
         // defs
-        "meta2" : "RegExp::@[_A-Za-z][_A-Za-z0-9]*",
+        "meta2" : "RegExp::/@[_A-Za-z][_A-Za-z0-9]*/",
 
         // css properties
-        "property" : [ 
-            "background-color", "background-image", "background-position", "background-repeat", "background", 
-            "font-family", "font-size", "font-weight", "font", 
-            "text-decoration", "text-align",
-            "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
-            "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
-            "border-left", "border-right", "border-top", "border-bottom", "border", 
-            "position", "display" , "content", "color"
-        ],
+        "property" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [ 
+                "background-color", "background-image", "background-position", "background-repeat", "background", 
+                "font-family", "font-size", "font-weight", "font", 
+                "text-decoration", "text-align",
+                "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
+                "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
+                "border-left", "border-right", "border-top", "border-bottom", "border", 
+                "position", "display" , "content", "color"
+            ]
+        },
                               
         // css html element
-        "element" : [ 
-            "a", "p", "i",
-            "br", "hr",
-            "sup", "sub",
-            "img", "video", "audio", 
-            "canvas", "iframe",
-            "pre", "code",
-            "h1", "h2", "h3", "h4", "h5", "h6", 
-            "html", "body", 
-            "header", "footer", "nav",
-            "div", "span", "section", "strong",
-            "blockquote"
-        ],
+        "element" : {
+            // enable autocompletion for these tokens, with their associated token ID
+            "autocomplete" : true,
+            "tokens" : [ 
+                "a", "p", "i",
+                "br", "hr",
+                "sup", "sub",
+                "img", "video", "audio", 
+                "canvas", "iframe",
+                "pre", "code",
+                "h1", "h2", "h3", "h4", "h5", "h6", 
+                "html", "body", 
+                "header", "footer", "nav",
+                "div", "span", "section", "strong",
+                "blockquote"
+            ]
+        },
         
-        "url" : "url"
+        "url" : "RegExp::/url\\b/"
     },
 
     //
@@ -192,19 +224,13 @@ var css_grammar = {
         // highlight url(...) as string regardless of quotes or not
         "urlDeclaration" : {
             "type" : "n-gram",
-            "tokens" : [ "url", "(", "stringOrUnquotedText", ")" ]
-        },
-        
-        "urlDeclarationGroup" : {
-            "type" : "group",
-            "match" : "all",
-            "tokens" : [ "url", "(", "stringOrUnquotedText", ")" ]
+            "tokens" : [ "url", "" /* match non-space */, "(", "stringOrUnquotedText", ")" ]
         },
         
         "RHSAssignment" : {
             "type" : "group",
             "match" : "oneOrMore",
-            "tokens" : [ "urlDeclarationGroup", "atom", "font", "standard", "string", "number", "hexcolor", "identifier", ",", "(", ")" ]
+            "tokens" : [ "urlDeclaration", "atom", "font", "standard", "string", "number", "hexcolor", "identifier", ",", "(", ")" ]
         },
         
         "cssAssignment" : {
