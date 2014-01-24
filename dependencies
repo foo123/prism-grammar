@@ -38,7 +38,7 @@
 # do any replacements to the source (orderedmap)
 @REPLACE =[{}]
 
-    "@@VERSION@@" = "0.5.2"
+    "@@VERSION@@" = "0.5.3"
     
     "@@MODULE_NAME@@" = "PrismGrammar"
     

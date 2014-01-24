@@ -1,7 +1,7 @@
 /**
 *
 *   PrismGrammar
-*   @version: 0.5.2
+*   @version: 0.5.3
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -1001,7 +1001,7 @@
     var
         getError = function(tokenizer) {
             if (T_NONSPACE == tokenizer.tt) return "NONSPACE Required";
-            else if (T_NULL == tokenizer.tt) return "EOL Required";
+            else if (T_EOL == tokenizer.tt) return "EOL Required";
             return (tokenizer.required) ? ('Token Missing "'+tokenizer.tn+'"') : ('Syntax Error "'+tokenizer.tn+'"');
         },
         
@@ -1065,7 +1065,7 @@
             },
             
             push : function(stack, pos, token) {
-                if ( pos ) stack.splice( pos, 0, token );
+                if ( /*pos &&*/ stack.length ) stack.splice( pos, 0, token );
                 else stack.push( token );
                 return this;
             },
@@ -1962,7 +1962,7 @@
   /**
 *
 *   PrismGrammar
-*   @version: 0.5.2
+*   @version: 0.5.3
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -1999,7 +1999,7 @@
     DEFAULTERROR = "";
     var PrismGrammar = {
         
-        VERSION : "0.5.2",
+        VERSION : "0.5.3",
         
         // extend a grammar using another base grammar
         /**[DOC_MARKDOWN]
