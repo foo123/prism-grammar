@@ -58,20 +58,20 @@
                     if ( DEFAULT == type || ERROR == type)
                     {
                         if ( token.type ) prismTokens.push( token );
-                        prismTokens.push( stream.cur() );
+                        prismTokens.push( stream.cur(1) );
                         token = { type: null, content: "" };
-                        stream.sft();
+                        //stream.sft();
                     }
                     else if ( type && type !== token.type )
                     {
                         if ( token.type ) prismTokens.push( token );
-                        token = { type: type, content: stream.cur() };
-                        stream.sft();
+                        token = { type: type, content: stream.cur(1) };
+                        //stream.sft();
                     }
                     else if ( token.type )
                     {
-                        token.content += stream.cur();
-                        stream.sft();
+                        token.content += stream.cur(1);
+                        //stream.sft();
                     }
                     
                     // check for non-space tokenizer before parsing space
@@ -114,10 +114,11 @@
                         if ( false === type )
                         {
                             // error
-                            if ( tokenizer.ERR || tokenizer.required )
+                            if ( tokenizer.ERR || tokenizer.REQ )
                             {
                                 // empty the stack
-                                stack.length = 0;
+                                //stack.length = 0;
+                                emptyStack(stack, tokenizer.sID);
                                 // skip this character
                                 stream.nxt();
                                 // generate error
@@ -152,10 +153,11 @@
                         if ( false === type )
                         {
                             // error
-                            if ( tokenizer.ERR || tokenizer.required )
+                            if ( tokenizer.ERR || tokenizer.REQ )
                             {
                                 // empty the stack
-                                stack.length = 0;
+                                //stack.length = 0;
+                                emptyStack(stack, tokenizer.sID);
                                 // skip this character
                                 stream.nxt();
                                 // generate error
@@ -190,16 +192,16 @@
                 if ( DEFAULT == type || ERROR == type)
                 {
                     if ( token.type ) prismTokens.push( token );
-                    prismTokens.push( stream.cur() );
+                    prismTokens.push( stream.cur(1) );
                 }
                 else if ( type && type !== token.type )
                 {
                     if ( token.type ) prismTokens.push( token );
-                    prismTokens.push( { type: type, content: stream.cur() } );
+                    prismTokens.push( { type: type, content: stream.cur(1) } );
                 }
                 else if ( token.type )
                 {
-                    token.content += stream.cur();
+                    token.content += stream.cur(1);
                     prismTokens.push( token );
                 }
                 token = null; //{ type: null, content: "" };
