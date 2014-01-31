@@ -136,6 +136,16 @@
                         // found token
                         else
                         {
+                            // match action error
+                            if ( tokenizer.MTCH )
+                            {
+                                // empty the stack
+                                //stack.length = 0;
+                                emptyStack(stack, tokenizer.sID);
+                                // generate error
+                                state.t = T_ERROR;
+                                state.r = type = ERROR;
+                            }
                             rewind = 1;
                             break;
                         }
@@ -175,6 +185,16 @@
                         // found token
                         else
                         {
+                            // match action error
+                            if ( tokenizer.MTCH )
+                            {
+                                // empty the stack
+                                //stack.length = 0;
+                                emptyStack(stack, tokenizer.sID);
+                                // generate error
+                                state.t = T_ERROR;
+                                state.r = type = ERROR;
+                            }
                             rewind = 1;
                             break;
                         }
@@ -210,10 +230,6 @@
             }
         }),
         
-        getParser = function(grammar, LOCALS) {
-            return new PrismParser(grammar, LOCALS);
-        },
-        
         getMode = function(grammar) {
             
             var LOCALS = { 
@@ -226,7 +242,7 @@
             grammar = parseGrammar( grammar );
             //console.log(grammar);
             
-            var parser = getParser( grammar, LOCALS ), _Prism,
+            var parser = new PrismParser(grammar, LOCALS), _Prism,
                 isHooked = 0, hookedLanguage = null, thisHooks = {
                 
                 'before-highlight' : function( env ) {
