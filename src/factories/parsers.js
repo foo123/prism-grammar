@@ -2,7 +2,7 @@
     //
     // parser factories
     var
-        PrismParser = Class({
+        Parser = Class({
             
             constructor: function(grammar, LOC) {
                 var ayto = this;
@@ -11,18 +11,20 @@
                 
                 ayto.Tokens = grammar.Parser || [];
                 ayto.cTokens = (grammar.cTokens.length) ? grammar.cTokens : null;
+                ayto.Style = grammar.Style;
             },
             
             ERR: null,
             DEF: null,
             cTokens: null,
             Tokens: null,
+            Style: null,
 
             // Prism compatible
             parse: function(code) {
                 code = code || "";
                 var lines = code.split(/\r\n|\r|\n/g), l = lines.length, i, tokens = [], data;
-                data = { state: new ParserState( ), tokens: null };
+                data = { state: new State( ), tokens: null };
                 
                 for (i=0; i<l; i++)
                 {
@@ -38,54 +40,53 @@
                 
                 var ayto = this, i, rewind, rewind2, ci,
                     tokenizer, interleavedCommentTokens = ayto.cTokens, tokens = ayto.Tokens, numTokens = tokens.length, 
-                    prismTokens, token, type, 
-                    stream, stack, DEFAULT = ayto.DEF, ERROR = ayto.ERR
+                    prismTokens, token, type, style,
+                    stream, stack, Style = ayto.Style, DEFAULT = ayto.DEF, ERROR = ayto.ERR
                 ;
                 
                 prismTokens = []; 
-                stream = new ParserStream( line );
+                stream = new Stream( line );
                 stack = state.stack;
                 token = { type: null, content: "" };
                 type = null;
+                style = null;
                 
                 // if EOL tokenizer is left on stack, pop it now
-                if ( stack.length && T_EOL == stack[stack.length-1].tt )  stack.pop();
+                if ( !stack.isEmpty() && T_EOL == stack.peek().tt && stream.sol() ) 
+                {
+                    stack.pop();
+                }
                 
                 while ( !stream.eol() )
                 {
                     rewind = 0;
                     
-                    if ( DEFAULT == type || ERROR == type)
+                    if ( DEFAULT == style || ERROR == style )
                     {
                         if ( token.type ) prismTokens.push( token );
                         prismTokens.push( stream.cur(1) );
                         token = { type: null, content: "" };
-                        //stream.sft();
                     }
-                    else if ( type && type !== token.type )
+                    else if ( style && style !== token.type )
                     {
                         if ( token.type ) prismTokens.push( token );
-                        token = { type: type, content: stream.cur(1) };
-                        //stream.sft();
+                        token = { type: style, content: stream.cur(1) };
                     }
                     else if ( token.type )
                     {
                         token.content += stream.cur(1);
-                        //stream.sft();
                     }
+                    style = false;
                     
                     // check for non-space tokenizer before parsing space
-                    if ( !stack.length || T_NONSPACE != stack[stack.length-1].tt )
+                    if ( (stack.isEmpty() || (T_NONSPACE != stack.peek().tt)) && stream.spc() )
                     {
-                        if ( stream.spc() )
-                        {
-                            state.t = T_DEFAULT;
-                            state.r = type = DEFAULT;
-                            continue;
-                        }
+                        state.t = type = DEFAULT;
+                        style = DEFAULT;
+                        continue;
                     }
                     
-                    while ( stack.length && !stream.eol() )
+                    while ( !stack.isEmpty() && !stream.eol() )
                     {
                         if ( interleavedCommentTokens )
                         {
@@ -93,9 +94,10 @@
                             while ( ci < interleavedCommentTokens.length )
                             {
                                 tokenizer = interleavedCommentTokens[ci++];
-                                state.r = type = tokenizer.get(stream, state);
+                                state.t = type = tokenizer.get(stream, state);
                                 if ( false !== type )
                                 {
+                                    style = Style[type] || DEFAULT;
                                     rewind2 = 1;
                                     break;
                                 }
@@ -108,8 +110,8 @@
                         }
                     
                         tokenizer = stack.pop();
-                        state.r = type = tokenizer.get(stream, state);
-                        
+                        state.t = type = tokenizer.get(stream, state);
+                    
                         // match failed
                         if ( false === type )
                         {
@@ -117,34 +119,36 @@
                             if ( tokenizer.ERR || tokenizer.REQ )
                             {
                                 // empty the stack
-                                //stack.length = 0;
-                                emptyStack(stack, tokenizer.sID);
+                                stack.empty('sID', tokenizer.sID);
                                 // skip this character
                                 stream.nxt();
                                 // generate error
-                                state.t = T_ERROR;
-                                state.r = type = ERROR;
+                                state.t = type = ERROR;
+                                style = ERROR;
+                                currentError = tokenizer.err();
                                 rewind = 1;
                                 break;
                             }
                             // optional
                             else
                             {
+                                style = false;
                                 continue;
                             }
                         }
-                        // found token
-                        else
+                        // found token (not empty)
+                        else if ( true !== type )
                         {
+                            style = Style[type] || DEFAULT;
                             // match action error
                             if ( tokenizer.MTCH )
                             {
                                 // empty the stack
-                                //stack.length = 0;
-                                emptyStack(stack, tokenizer.sID);
+                                stack.empty('sID', tokenizer.sID);
                                 // generate error
-                                state.t = T_ERROR;
-                                state.r = type = ERROR;
+                                state.t = type = ERROR;
+                                style = ERROR;
+                                currentError = tokenizer.err();
                             }
                             rewind = 1;
                             break;
@@ -157,7 +161,7 @@
                     for (i=0; i<numTokens; i++)
                     {
                         tokenizer = tokens[i];
-                        state.r = type = tokenizer.get(stream, state);
+                        state.t = type = tokenizer.get(stream, state);
                         
                         // match failed
                         if ( false === type )
@@ -166,34 +170,36 @@
                             if ( tokenizer.ERR || tokenizer.REQ )
                             {
                                 // empty the stack
-                                //stack.length = 0;
-                                emptyStack(stack, tokenizer.sID);
+                                stack.empty('sID', tokenizer.sID);
                                 // skip this character
                                 stream.nxt();
                                 // generate error
-                                state.t = T_ERROR;
-                                state.r = type = ERROR;
+                                state.t = type = ERROR;
+                                style = ERROR;
+                                currentError = tokenizer.err();
                                 rewind = 1;
                                 break;
                             }
                             // optional
                             else
                             {
+                                style = false;
                                 continue;
                             }
                         }
-                        // found token
-                        else
+                        // found token (not empty)
+                        else if ( true !== type )
                         {
+                            style = Style[type] || DEFAULT;
                             // match action error
                             if ( tokenizer.MTCH )
                             {
                                 // empty the stack
-                                //stack.length = 0;
-                                emptyStack(stack, tokenizer.sID);
+                                stack.empty('sID', tokenizer.sID);
                                 // generate error
-                                state.t = T_ERROR;
-                                state.r = type = ERROR;
+                                state.t = type = ERROR;
+                                style = ERROR;
+                                currentError = tokenizer.err();
                             }
                             rewind = 1;
                             break;
@@ -205,19 +211,19 @@
                     
                     // unknown, bypass
                     stream.nxt();
-                    state.t = T_DEFAULT;
-                    state.r = type = DEFAULT;
+                    state.t = type = DEFAULT;
+                    style = DEFAULT;
                 }
                 
-                if ( DEFAULT == type || ERROR == type)
+                if ( DEFAULT == style || ERROR == style )
                 {
                     if ( token.type ) prismTokens.push( token );
                     prismTokens.push( stream.cur(1) );
                 }
-                else if ( type && type !== token.type )
+                else if ( style && style !== token.type )
                 {
                     if ( token.type ) prismTokens.push( token );
-                    prismTokens.push( { type: type, content: stream.cur(1) } );
+                    prismTokens.push( { type: style, content: stream.cur(1) } );
                 }
                 else if ( token.type )
                 {
@@ -242,7 +248,7 @@
             grammar = parseGrammar( grammar );
             //console.log(grammar);
             
-            var parser = new PrismParser(grammar, LOCALS), _Prism,
+            var parser = new Parser(grammar, LOCALS), _Prism,
                 isHooked = 0, hookedLanguage = null, thisHooks = {
                 
                 'before-highlight' : function( env ) {
