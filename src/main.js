@@ -36,7 +36,7 @@
     [/DOC_MARKDOWN]**/
     DEFAULTSTYLE = "";
     DEFAULTERROR = "";
-    var PrismGrammar = exports.PrismGrammar = {
+    var PrismGrammar = exports['@@MODULE_NAME@@'] = {
         
         VERSION : "@@VERSION@@",
         
