@@ -1,7 +1,7 @@
 /**
 *
 *   PrismGrammar
-*   @version: 0.7.4
+*   @version: 0.7.5
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -2171,7 +2171,7 @@
   /**
 *
 *   PrismGrammar
-*   @version: 0.7.4
+*   @version: 0.7.5
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -2208,7 +2208,7 @@
     DEFAULTERROR = "";
     var PrismGrammar = exports['PrismGrammar'] = {
         
-        VERSION : "0.7.4",
+        VERSION : "0.7.5",
         
         // extend a grammar using another base grammar
         /**[DOC_MARKDOWN]
