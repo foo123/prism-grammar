@@ -211,8 +211,8 @@ Parser[PROTO] = {
                 else if ( true !== type )
                 {
                     style = Style[type] || DEFAULT;
-                    // match action error
-                    if ( tokenizer.MTCH )
+                    // action error
+                    if ( tokenizer.ACT )
                     {
                         // empty the stack
                         stack.empty('sID', tokenizer.sID);
