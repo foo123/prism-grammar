@@ -3,7 +3,7 @@ prism-grammar
 
 __Transform a JSON grammar into a syntax-highlighter for Prism__
 
-A simple and light-weight ( ~ 20kB minified) [Prism](https://github.com/LeaVerou/prism) plugin
+A simple and light-weight (~ 20kB minified, ~ 8kB zipped) [Prism](https://github.com/LeaVerou/prism) plugin
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
@@ -29,12 +29,14 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 
 ###Features
 
-* A grammar can **extend other grammars** (so arbitrary variations and dialects can be parsed more easily), Prism already supports a similar feature
-* [Grammar](/grammar-reference.md) includes: **Style Model** , **Lex Model** and **Syntax Model** (optional), plus a couple of *settings* (see examples)
-* Grammar **specification can be minimal** (defaults will be used) (see example grammars)
-* [Grammar Syntax Model](/grammar-reference.md) can enable highlight in a more context-specific way, plus detect possible *syntax errors*
-* [Grammar Syntax Model](/grammar-reference.md) can contain *recursive references*
-* Generated highlighters are **optimized for speed and size**
+* A grammar can **extend other grammars** (so arbitrary variations and dialects can be parsed more easily)
+* [`Grammar`](/grammar-reference.md) includes: `Style` Model , `Lex` Model and `Syntax` Model (optional), plus a couple of *settings* (see examples)
+* `Grammar` **specification can be minimal** (defaults will be used) (see example grammars)
+* [`Grammar Syntax Model`](/grammar-reference.md) can enable highlight in a more context-specific way, plus detect possible *syntax errors*
+* [`Grammar Syntax Model`](/grammar-reference.md) can contain *recursive references*
+* [`Grammar Syntax Model`](/grammar-reference.md) can be specificed using [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation (**NEW feature**)
+* Generated highlight modes can support **toggle comments** and **keyword autocompletion** functionality if defined in the grammar
+* Generated parsers are **optimized for speed and size**
 
 
 ###How to use:

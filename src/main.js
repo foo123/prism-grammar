@@ -11,18 +11,18 @@
 
 //
 // parser factories
-function Parser(grammar, LOC) 
-{
-    var self = this;
-    self.DEF = LOC.DEFAULT;
-    self.ERR = LOC.ERROR;
-    
-    self.Tokens = grammar.Parser || [];
-    self.cTokens = grammar.cTokens.length ? grammar.cTokens : null;
-    self.Style = grammar.Style;
-}
-Parser[PROTO] = {
-     constructor: Parser
+DEFAULTSTYLE = "";
+DEFAULTERROR = "";
+var Parser = Class({
+    constructor: function Parser( grammar, LOC ) {
+        var self = this;
+        self.DEF = LOC.DEFAULT;
+        self.ERR = LOC.ERROR;
+        
+        self.Tokens = grammar.Parser || [];
+        self.cTokens = grammar.cTokens.length ? grammar.cTokens : null;
+        self.Style = grammar.Style;
+    }
     
     ,ERR: null
     ,DEF: null
@@ -50,7 +50,7 @@ Parser[PROTO] = {
         {
             data = self.getLineTokens(lines[i], data.state, i);
             tokens = tokens.concat(data.tokens);
-            if (i<l-1) tokens.push("\n");
+            if (i+1<l) tokens.push("\n");
         }
         return tokens;
     }
@@ -60,7 +60,7 @@ Parser[PROTO] = {
         
         var self = this, i, rewind, rewind2, ci,
             tokenizer, interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
-            prismTokens, token, type, style,
+            prismTokens, token, type, style, currentError = null,
             stream, stack, Style = self.Style, DEFAULT = self.DEF, ERROR = self.ERR
         ;
         
@@ -161,7 +161,7 @@ Parser[PROTO] = {
                 {
                     style = Style[type] || DEFAULT;
                     // action error
-                    if ( tokenizer.ACT )
+                    if ( tokenizer.ACTER )
                     {
                         // empty the stack
                         stack.empty('sID', tokenizer.sID);
@@ -212,7 +212,7 @@ Parser[PROTO] = {
                 {
                     style = Style[type] || DEFAULT;
                     // action error
-                    if ( tokenizer.ACT )
+                    if ( tokenizer.ACTER )
                     {
                         // empty the stack
                         stack.empty('sID', tokenizer.sID);
@@ -254,41 +254,40 @@ Parser[PROTO] = {
         
         return { state: state, tokens: prismTokens };
     }
-};
+});
 
-function getMode( grammar ) 
+function get_mode( grammar ) 
 {
-    var parser = new Parser( parseGrammar( grammar ), { 
+    var parser = new Parser( parse_grammar( grammar ), { 
             DEFAULT: DEFAULTSTYLE,
             ERROR: DEFAULTERROR
         }), _Prism, isHooked = 0, hookedLanguage = null, 
         
         thisHooks = {
-        
-        'before-highlight': function( env ) {
-            // use the custom parser for the grammar to highlight
-            // hook only if the language matches
-            if ( hookedLanguage === env.language )
-            {
-                // avoid double highlight work, set code to ""
-                env._code = env.code;
-                env.code = "";
-                env.parser = parser;
+            'before-highlight': function( env ) {
+                // use the custom parser for the grammar to highlight
+                // hook only if the language matches
+                if ( hookedLanguage === env.language )
+                {
+                    // avoid double highlight work, set code to ""
+                    env._code = env.code;
+                    env.code = "";
+                    //env.parser = parser;
+                }
+            },
+            
+            'before-insert': function( env ) {
+                if ( hookedLanguage === env.language )
+                {
+                    // re-set
+                    env.code = env._code;
+                    env._code = "";
+                    //env._highlightedCode = env.highlightedCode;
+                    // tokenize code and transform to prism-compatible tokens
+                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code), env.language );
+                }
             }
-        },
-        
-        'before-insert': function( env ) {
-            if ( hookedLanguage === env.language )
-            {
-                // re-set
-                env.code = env._code;
-                env._code = "";
-                //env._highlightedCode = env.highlightedCode;
-                // tokenize code and transform to prism-compatible tokens
-                env.highlightedCode = _Prism.Token.stringify( env.parser.parse(env.code), env.language );
-            }
-        }            
-    };
+        };
     
     // return a plugin that can be hooked-unhooked to Prism under certain language conditions
     return {
@@ -309,13 +308,13 @@ function getMode( grammar )
         unhook: function( ) {
             if ( isHooked )
             {
-                var hooks = _Prism.hooks.all;
+                var hooks = _Prism.hooks.all, hookname, thishook;
                 
-                for (var hookname in thisHooks)
+                for (hookname in thisHooks)
                 {
                     if ( hooks[HAS](hookname) && thisHooks[HAS](hookname) )
                     {
-                        var thishook = hooks[hookname].indexOf( thisHooks[hookname] );
+                        thishook = hooks[hookname].indexOf( thisHooks[hookname] );
                         if ( thishook > -1 ) hooks[hookname].splice(thishook, 1);
                     }
                 }
@@ -345,8 +344,6 @@ function getMode( grammar )
 * ```
 *
 [/DOC_MARKDOWN]**/
-DEFAULTSTYLE = "";
-DEFAULTERROR = "";
 var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     
     VERSION: "@@VERSION@@",
@@ -378,7 +375,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * However user can use this method to cache a parsedgrammar to be used later.
     * Already parsed grammars are NOT re-parsed when passed through the parse method again
     [/DOC_MARKDOWN]**/
-    parse: parseGrammar,
+    parse: parse_grammar,
     
     // get an ACE-compatible syntax-highlight mode from a grammar
     /**[DOC_MARKDOWN]
@@ -390,5 +387,5 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     *
     * This is the main method which transforms a JSON grammar into a syntax-highlighter for Prism.
     [/DOC_MARKDOWN]**/
-    getMode: getMode
+    getMode: get_mode
 };
