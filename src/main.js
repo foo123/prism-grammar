@@ -356,9 +356,9 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * extendedgrammar = PrismGrammar.extend( grammar, basegrammar1 [, basegrammar2, ..] );
     * ```
     *
-    * Extend a grammar with basegrammar1, basegrammar2, etc..
+    * Extend a `grammar` with `basegrammar1`, `basegrammar2`, etc..
     *
-    * This way arbitrary dialects and variations can be handled more easily
+    * This way arbitrary `dialects` and `variations` can be handled more easily
     [/DOC_MARKDOWN]**/
     extend: extend,
     
@@ -370,9 +370,9 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * parsedgrammar = PrismGrammar.parse( grammar );
     * ```
     *
-    * This is used internally by the PrismGrammar Class
-    * In order to parse a JSON grammar to a form suitable to be used by the syntax-highlight parser.
-    * However user can use this method to cache a parsedgrammar to be used later.
+    * This is used internally by the `PrismGrammar` Class
+    * In order to parse a `JSON grammar` to a form suitable to be used by the syntax-highlighter.
+    * However user can use this method to cache a `parsedgrammar` to be used later.
     * Already parsed grammars are NOT re-parsed when passed through the parse method again
     [/DOC_MARKDOWN]**/
     parse: parse_grammar,
@@ -385,7 +385,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * mode = PrismGrammar.getMode( grammar );
     * ```
     *
-    * This is the main method which transforms a JSON grammar into a syntax-highlighter for Prism.
+    * This is the main method which transforms a `JSON grammar` into a syntax-highlighter for `Prism`.
     [/DOC_MARKDOWN]**/
     getMode: get_mode
 };

@@ -29,13 +29,14 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 
 ###Features
 
-* A grammar can **extend other grammars** (so arbitrary variations and dialects can be parsed more easily)
-* [`Grammar`](/grammar-reference.md) includes: `Style` Model , `Lex` Model and `Syntax` Model (optional), plus a couple of *settings* (see examples)
-* `Grammar` **specification can be minimal** (defaults will be used) (see example grammars)
-* [`Grammar Syntax Model`](/grammar-reference.md) can enable highlight in a more context-specific way, plus detect possible *syntax errors*
-* [`Grammar Syntax Model`](/grammar-reference.md) can contain *recursive references*
-* [`Grammar Syntax Model`](/grammar-reference.md) can be specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
-* Generated parsers are **optimized for speed and size**
+* A `Grammar` can **extend other `Grammars`** (so arbitrary `variations` and `dialects` can be handled more easily)
+* [`Grammar`](/grammar-reference.md) includes: **`Style Model`** , **`Lex Model`** and **`Syntax Model`** (optional), plus a couple of *settings* (see examples)
+* **`Grammar` specification can be minimal** (defaults will be used) (see example grammars)
+* `Grammar.Syntax Model` can enable highlight in a more context-specific way, plus detect possible *syntax errors*
+* `Grammar.Syntax Model` can contain **recursive references**
+* `Grammar.Syntax Model` can be (fully) specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
+* Generated highlighters are **optimized for speed and size**
+* Can generate a syntax-highlighter from a grammar **interactively and on-the-fly** ( see example, http://foo123.github.io/examples/prism-grammar )
 
 
 ###How to use:
