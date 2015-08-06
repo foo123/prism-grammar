@@ -34,8 +34,7 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 * `Grammar` **specification can be minimal** (defaults will be used) (see example grammars)
 * [`Grammar Syntax Model`](/grammar-reference.md) can enable highlight in a more context-specific way, plus detect possible *syntax errors*
 * [`Grammar Syntax Model`](/grammar-reference.md) can contain *recursive references*
-* [`Grammar Syntax Model`](/grammar-reference.md) can be specificed using [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation (**NEW feature**)
-* Generated highlight modes can support **toggle comments** and **keyword autocompletion** functionality if defined in the grammar
+* [`Grammar Syntax Model`](/grammar-reference.md) can be specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
 * Generated parsers are **optimized for speed and size**
 
 
