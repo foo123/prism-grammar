@@ -17,6 +17,7 @@ var xml_grammar = {
         "auto_close_open_tag":   "tag",
         "close_tag":             "tag",
         "attribute":             "attr-name",
+        "id":                    "attr-name",
         "number":                "number",
         // "" represents default style or unstyled
         "string":                "",

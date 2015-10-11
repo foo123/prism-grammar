@@ -198,6 +198,7 @@ var Parser = Class({
                             // generate error
                             type = ERR; style = ERR;
                             //action.err(state, lin, pos, lin, stream.pos);
+                            break;
                         }
                     }
                     rewind = 1;
@@ -254,6 +255,7 @@ var Parser = Class({
                             // generate error
                             type = ERR; style = ERR;
                             //action.err(state, lin, pos, lin, stream.pos);
+                            break;
                         }
                     }
                     rewind = 1;
