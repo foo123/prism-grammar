@@ -35,7 +35,7 @@
     </head>
     <body>
         
-        <h3>Prism: Dynamic JavaScript Grammar</h3>
+        <h3>Prism (ver <span id="version">0</span>): Dynamic JavaScript Grammar</h3>
 
         
 <!--
@@ -139,6 +139,7 @@ getMode = function(grammar) {
         <script>
         // <![CDATA[
         
+        document.getElementById('version').innerHTML = PrismGrammar.VERSION;
         var js_mode = PrismGrammar.getMode( js_grammar );
         js_mode.hook( Prism, "javascript" );
         Prism.highlightElement( document.getElementById('code') );

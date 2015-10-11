@@ -41,56 +41,82 @@ var Parser = Class({
     }
     
     // Prism compatible
-    ,parse: function( code ) {
+    ,parse: function( code, parse_type ) {
         code = code || "";
-        var self = this, lines = code.split(newline_re), l = lines.length, i, tokens = [], data;
-        data = { state: new State( ), tokens: null };
+        var self = this, lines = code.split(newline_re), l = lines.length, i, 
+            tokens = null, data, parse_errors, parse_tokens, ret;
         
-        for (i=0; i<l; i++)
+        parse_type = parse_type || TOKENS;
+        parse_errors = !!(parse_type&ERRORS);
+        parse_tokens = !!(parse_type&TOKENS);
+        
+        data = {state:new State(0, 0, parse_errors), tokens:null};
+        
+        if ( parse_tokens )
         {
-            data = self.getLineTokens(lines[i], data.state, i);
-            tokens = tokens.concat(data.tokens);
-            if (i+1<l) tokens.push("\n");
+            tokens = [];
+            for (i=0; i<l; i++)
+            {
+                data.state.line = i;
+                data = self.getLineTokens(lines[i], data.state, i);
+                tokens = tokens.concat(data.tokens);
+                if (i+1<l) tokens.push("\n");
+            }
         }
-        return tokens;
+        else //if ( parse_errors )
+        {
+            for (i=0; i<l; i++)
+            {
+                data.state.line = i;
+                data = self.getLineTokens(lines[i], data.state, i);
+            }
+        }
+        if ( parse_tokens && parse_errors ) ret = {tokens:tokens, errors:data.state.err};
+        else if ( parse_tokens ) ret = tokens;
+        else ret = data.state.err;
+        data.state.dispose();
+        return ret;
     }
     
     // Prism compatible
     ,getLineTokens: function( line, state, row ) {
         
-        var self = this, i, rewind, rewind2, ci,
-            tokenizer, interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
-            prismTokens, token, type, style, currentError = null,
-            stream, stack, Style = self.Style, DEFAULT = self.DEF, ERROR = self.ERR
+        var self = this, i, rewind, rewind2, ci, tokenizer, action, 
+            interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
+            prismTokens, token, type, style, pos, lin, 
+            stream, stack, Style = self.Style, DEFAULT = self.DEF, ERR = self.ERR
         ;
         
         prismTokens = []; 
         stream = new Stream( line );
         stack = state.stack;
-        token = { type: null, content: "" };
-        type = null;
-        style = null;
+        token = {type:null, content:""};
+        type = null; style = null;
         
         // if EOL tokenizer is left on stack, pop it now
-        if ( stream.sol() && !stack.isEmpty() && T_EOL === stack.peek().tt ) 
+        if ( stream.sol() && !stack.isEmpty() && T_EOL === stack.peek().type ) 
         {
             stack.pop();
         }
         
+        lin = state.line;
+        pos = stream.pos;
         while ( !stream.eol() )
         {
             rewind = 0;
             
-            if ( DEFAULT === style || ERROR === style )
+            if ( DEFAULT === style || ERR === style )
             {
                 if ( token.type ) prismTokens.push( token );
                 prismTokens.push( stream.cur(1) );
-                token = { type: null, content: "" };
+                token = {type:null, content:""};
+                pos = stream.pos;
             }
             else if ( style && style !== token.type )
             {
                 if ( token.type ) prismTokens.push( token );
-                token = { type: style, content: stream.cur(1) };
+                token = {type:style, content:stream.cur(1)};
+                pos = stream.pos;
             }
             else if ( token.type )
             {
@@ -99,10 +125,9 @@ var Parser = Class({
             style = false;
             
             // check for non-space tokenizer before parsing space
-            if ( (stack.isEmpty() || (T_NONSPACE !== stack.peek().tt)) && stream.spc() )
+            if ( (stack.isEmpty() || (T_NONSPACE !== stack.peek().type)) && stream.spc() )
             {
-                state.t = type = DEFAULT;
-                style = DEFAULT;
+                type = DEFAULT; style = DEFAULT;
                 continue;
             }
             
@@ -114,7 +139,7 @@ var Parser = Class({
                     while ( ci < interleavedCommentTokens.length )
                     {
                         tokenizer = interleavedCommentTokens[ci++];
-                        state.t = type = tokenizer.get(stream, state);
+                        type = tokenizer.get(stream, state);
                         if ( false !== type )
                         {
                             style = Style[type] || DEFAULT;
@@ -129,23 +154,23 @@ var Parser = Class({
                     }
                 }
             
+                pos = stream.pos;
                 tokenizer = stack.pop();
-                state.t = type = tokenizer.get(stream, state);
+                type = tokenizer.get(stream, state);
             
                 // match failed
                 if ( false === type )
                 {
                     // error
-                    if ( tokenizer.ERR || tokenizer.REQ )
+                    if ( tokenizer.status&REQUIRED_OR_ERROR )
                     {
                         // empty the stack
-                        stack.empty('sID', tokenizer.sID);
+                        stack.empty('$id', tokenizer.$id);
                         // skip this character
                         stream.nxt();
                         // generate error
-                        state.t = type = ERROR;
-                        style = ERROR;
-                        currentError = tokenizer.err();
+                        type = ERR; style = ERR;
+                        tokenizer.err(state, lin, pos, lin, stream.pos);
                         rewind = 1;
                         break;
                     }
@@ -160,15 +185,20 @@ var Parser = Class({
                 else if ( true !== type )
                 {
                     style = Style[type] || DEFAULT;
-                    // action error
-                    if ( tokenizer.ACTER )
+                    // action token follows, execute action on current token
+                    while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
                     {
-                        // empty the stack
-                        stack.empty('sID', tokenizer.sID);
-                        // generate error
-                        state.t = type = ERROR;
-                        style = ERROR;
-                        currentError = tokenizer.err();
+                        action = stack.pop();
+                        action.get(stream, state);
+                        // action error
+                        if ( action.status&ERROR )
+                        {
+                            // empty the stack
+                            stack.empty('$id', /*action*/tokenizer.$id);
+                            // generate error
+                            type = ERR; style = ERR;
+                            //action.err(state, lin, pos, lin, stream.pos);
+                        }
                     }
                     rewind = 1;
                     break;
@@ -180,23 +210,23 @@ var Parser = Class({
             
             for (i=0; i<numTokens; i++)
             {
+                pos = stream.pos;
                 tokenizer = tokens[i];
-                state.t = type = tokenizer.get(stream, state);
+                type = tokenizer.get(stream, state);
                 
                 // match failed
                 if ( false === type )
                 {
                     // error
-                    if ( tokenizer.ERR || tokenizer.REQ )
+                    if ( tokenizer.status&REQUIRED_OR_ERROR )
                     {
                         // empty the stack
-                        stack.empty('sID', tokenizer.sID);
+                        stack.empty('$id', tokenizer.$id);
                         // skip this character
                         stream.nxt();
                         // generate error
-                        state.t = type = ERROR;
-                        style = ERROR;
-                        currentError = tokenizer.err();
+                        type = ERR; style = ERR;
+                        tokenizer.err(state, lin, pos, lin, stream.pos);
                         rewind = 1;
                         break;
                     }
@@ -211,15 +241,20 @@ var Parser = Class({
                 else if ( true !== type )
                 {
                     style = Style[type] || DEFAULT;
-                    // action error
-                    if ( tokenizer.ACTER )
+                    // action token follows, execute action on current token
+                    while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
                     {
-                        // empty the stack
-                        stack.empty('sID', tokenizer.sID);
-                        // generate error
-                        state.t = type = ERROR;
-                        style = ERROR;
-                        currentError = tokenizer.err();
+                        action = stack.pop();
+                        action.get(stream, state);
+                        // action error
+                        if ( action.status&ERROR )
+                        {
+                            // empty the stack
+                            stack.empty('$id', /*action*/tokenizer.$id);
+                            // generate error
+                            type = ERR; style = ERR;
+                            //action.err(state, lin, pos, lin, stream.pos);
+                        }
                     }
                     rewind = 1;
                     break;
@@ -230,12 +265,10 @@ var Parser = Class({
             if ( stream.eol() ) break;
             
             // unknown, bypass
-            stream.nxt();
-            state.t = type = DEFAULT;
-            style = DEFAULT;
+            stream.nxt(); type = DEFAULT; style = DEFAULT;
         }
         
-        if ( DEFAULT === style || ERROR === style )
+        if ( DEFAULT === style || ERR === style )
         {
             if ( token.type ) prismTokens.push( token );
             prismTokens.push( stream.cur(1) );
@@ -243,7 +276,7 @@ var Parser = Class({
         else if ( style && style !== token.type )
         {
             if ( token.type ) prismTokens.push( token );
-            prismTokens.push( { type: style, content: stream.cur(1) } );
+            prismTokens.push( {type:style, content:stream.cur(1)} );
         }
         else if ( token.type )
         {
@@ -252,7 +285,7 @@ var Parser = Class({
         }
         token = null; //{ type: null, content: "" };
         
-        return { state: state, tokens: prismTokens };
+        return {state:state, tokens:prismTokens};
     }
 });
 
@@ -284,7 +317,7 @@ function get_mode( grammar )
                     env._code = "";
                     //env._highlightedCode = env.highlightedCode;
                     // tokenize code and transform to prism-compatible tokens
-                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code), env.language );
+                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code, TOKENS), env.language );
                 }
             }
         };
@@ -319,6 +352,8 @@ function get_mode( grammar )
                     }
                 }
                 isHooked = 0;
+                hookedLanguage = null;
+                _Prism = null;
             }
         }
     };

@@ -29,272 +29,198 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 
 ###Features
 
-* A `Grammar` can **extend other `Grammars`** (so arbitrary `variations` and `dialects` can be handled more easily)
-* [`Grammar`](/grammar-reference.md) includes: **`Style Model`** , **`Lex Model`** and **`Syntax Model`** (optional), plus a couple of *settings* (see examples)
-* **`Grammar` specification can be minimal** (defaults will be used) (see example grammars)
-* `Grammar.Syntax Model` can enable highlight in a more context-specific way, plus detect possible *syntax errors*
-* `Grammar.Syntax Model` can contain **recursive references**
-* `Grammar.Syntax Model` can be (fully) specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
+* A [`Grammar`](/grammar-reference.md) can **extend other `Grammars`** (so arbitrary `variations` and `dialects` can be handled more easily)
+* `Grammar` includes: [`Style Model`](/grammar-reference.md#style-model) , [`Lex Model`](/grammar-reference.md#lexical-model) and [`Syntax Model` (optional)](/grammar-reference.md#syntax-model), plus a couple of [*settings*](/grammar-reference.md#extra-settings) (see examples)
+* **`Grammar` specification can be minimal**, defaults will be used (see example grammars)
+* [`Grammar.Syntax Model`](/grammar-reference.md#syntax-model) can enable highlight in a more *context-specific* way, plus detect possible *syntax errors*
+* [`Grammar.Syntax Model`](/grammar-reference.md#syntax-model) can contain **recursive references**
+* [`Grammar.Syntax Model`](/grammar-reference.md#syntax-peg-bnf-like-notations) can be (fully) specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
+* `Grammar` can define [*action* tokens](/grammar-reference.md#action-tokens) to perform *complex context-specific* parsing functionality, including **associated tag matching** and **duplicate identifiers** (see for example `xml.grammar` example) (**NEW feature**)
 * Generated highlighters are **optimized for speed and size**
 * Can generate a syntax-highlighter from a grammar **interactively and on-the-fly** ( see example, http://foo123.github.io/examples/prism-grammar )
 
 
 ###How to use:
 
-An example for CSS:
+An example for XML:
 
 
 ```javascript
 
-// 1. a partial css grammar in simple JSON format
-var css_grammar = {
+// 1. a partial xml grammar in simple JSON format
+var xml_grammar = {
     
     // prefix ID for regular expressions used in the grammar
-    "RegExpID" : "RegExp::",
+    "RegExpID" : "RE::",
 
     //
     // Style model
     "Style" : {
-        // lang token type  -> prism (style) tag
-        "comment":      "comment",
-        "meta":         "property",
-        "meta2":        "constant",
-        "atom":         "entity",
-        "property":     "property",
-        "element":      "atrule",
-        "url":          "url",
-        "operator":     "operator",
-        "font":         "entity",
-        "cssID":        "atrule",
-        "cssClass":     "atrule",
-        "cssPseudoElement": "selector",
-        "identifier":   "symbol",
-        "number":       "number",
-        "hexcolor":      "number",
-        "standard":      "important",
-        "string":       "string",
-        "text":         "string"
+        // lang token type  -> Prism (style) tag
+        "comment_block":         "comment",
+        "meta_block":            "entity",
+        "atom":                  "string",
+        "cdata_block":           "comment",
+        "open_tag":              "tag",
+        "close_open_tag":        "tag",
+        "auto_close_open_tag":   "tag",
+        "close_tag":             "tag",
+        "attribute":             "attr-name",
+        "number":                "number",
+        // "" represents default style or unstyled
+        "string":                "",
+        // allow block delims / interior to have different styles
+        "string.inside":         "attr-value"
     },
 
-    
     //
     // Lexical model
-    "Lex" : {
+    "Lex": {
         
-        // comments
-        "comment" : {
-            "type" : "comment",
-            "tokens" : [
+        "comment_block": {
+            "type": "comment",
+            "tokens": [
                 // block comments
-                // start, end     delims
-                [  "/*",  "*/" ]
+                // start,    end  delims
+                [ "&lt;!--",    "-->" ]
             ]
         },
         
-        // some standard identifiers
-        "font" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [
-                "arial", "tahoma", "courier"
+        "cdata_block": {
+            "type": "block",
+            "tokens": [
+                // cdata block
+                //   start,        end  delims
+                [ "&lt;![CDATA[",    "]]>" ]
             ]
         },
         
-        "standard" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [
-                "!important", "only"
+        "meta_block": {
+            "type": "block",
+            "tokens": [
+                // meta block
+                //        start,                          end  delims
+                [ "RE::/&lt;\\?[_a-zA-Z][\\w\\._\\-]*/",   "?>" ]
             ]
         },
         
-        // css ids
-        "cssID" : "RegExp::/#[_A-Za-z][_A-Za-z0-9]*/",
-        
-        // css classes
-        "cssClass" : "RegExp::/\\.[_A-Za-z][_A-Za-z0-9]*/",
-        
-        "cssPseudoElement" : "RegExp::/::?[_A-Za-z][_A-Za-z0-9]*/",
-        
-        // general identifiers
-        "identifier" : "RegExp::/[_A-Za-z][_A-Za-z0-9]*/",
+        // strings
+        "string": {
+            "type": "block",
+            "multiline": false,
+            "tokens": [ 
+                // if no end given, end is same as start
+                [ "\"" ], [ "'" ] 
+            ]
+        },
         
         // numbers, in order of matching
-        "number" : [
-            // floats
-            "RegExp::/\\d*\\.\\d+(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
-            "RegExp::/\\d+\\.\\d*(em|px|%|pt)?/",
-            "RegExp::/\\.\\d+(em|px|%|pt)?/",
-            // integers
-            // decimal
-            "RegExp::/[1-9]\\d*(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
-            // just zero
-            "RegExp::/0(?![\\dx])(em|px|%|pt)?/"
+        "number": [
+            // dec
+            "RE::/[0-9]\\d*/",
+            // hex
+            "RE::/#[0-9a-fA-F]+/"
         ],
         
-        // hex colors
-        "hexcolor" : "RegExp::/#[0-9a-fA-F]+/",
-
-        // strings
-        "string" : {
-            "type" : "escaped-block",
-            "escape" : "\\",
-            "tokens" : [
-                //  start,           end of string (can be the matched regex group ie. 1 )
-                [ "RegExp::/([`'\"])/", 1 ]
-            ]
-        },
-        
-        "text" : "RegExp::/[^\\(\\)\\[\\]\\{\\}'\"]+/",
-        
-        // operators
-        "operator" : {
-            "tokens" : [
-                "*", "+", ",", "=", ";", ">"
-            ]
-        },
-        
         // atoms
-        "atom" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "block", "none", "inherit", "inline-block", "inline", 
-                "relative", "absolute", "fixed", "static",
-                "sans-serif", "serif", "monospace", "bolder", "bold", 
-                "rgba", "rgb", "underline", "wrap"
-            ]
+        "atom": [
+            "RE::/&amp;#x[a-fA-F\\d]+;/",
+            "RE::/&amp;#[\\d]+;/",
+            "RE::/&amp;[a-zA-Z][a-zA-Z0-9]*;/"
+        ],
+        
+        // tag attributes
+        "attribute": "RE::/[_a-zA-Z][_a-zA-Z0-9\\-]*/",
+        
+        // tags
+        "open_tag": "RE::/&lt;([_a-zA-Z][_a-zA-Z0-9\\-]*)/",
+        "close_open_tag": ">",
+        "auto_close_open_tag": "/>",
+        "close_tag": "RE::/&lt;\\/([_a-zA-Z][_a-zA-Z0-9\\-]*)>/",
+        
+        // NEW feature
+        // action tokens to perform complex grammar functionality 
+        // like associated tag matching and unique identifiers
+        
+        // allow to find duplicate xml identifiers, with action tokens
+        "unique": {
+            "unique": ["xml", "$1"],
+            "msg": "Duplicate id attribute \"$0\""
         },
         
-        // meta
-        "meta" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ "screen",  "handheld" ]
-        },
-
-        // defs
-        "meta2" : "RegExp::/@[_A-Za-z][_A-Za-z0-9]*/",
-
-        // css properties
-        "property" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "background-color", "background-image", "background-position", "background-repeat", "background", 
-                "font-family", "font-size", "font-weight", "font", 
-                "text-decoration", "text-align",
-                "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
-                "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
-                "border-left", "border-right", "border-top", "border-bottom", "border", 
-                "position", "display" , "content", "color"
-            ]
-        },
-                              
-        // css html element
-        "element" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "a", "p", "i",
-                "br", "hr",
-                "sup", "sub",
-                "img", "video", "audio", 
-                "canvas", "iframe",
-                "pre", "code",
-                "h1", "h2", "h3", "h4", "h5", "h6", 
-                "html", "body", 
-                "header", "footer", "nav",
-                "div", "span", "section", "strong",
-                "blockquote"
-            ]
+        // allow to match start/end tags, with action tokens
+        "match": {
+            "push": "<$1>"
         },
         
-        "url" : "RegExp::/url\\b/"
+        "matched": {
+            "pop": "<$1>",
+            "msg": "Tags \"$0\" and \"$1\" do not match!"
+        },
+        
+        "nomatch": {
+            "pop": null
+        }
     },
-
+    
     //
     // Syntax model (optional)
-    "Syntax" : {
+    "Syntax": {
+        // NEW feature
+        // using PEG/BNF-like shorthands, instead of multiple grammar configuration objects
         
-        "stringOrUnquotedText" : {
-            "type" : "group",
-            "match" : "either",
-            "tokens" : [ "string", "text" ]
+        "id_att": "'id' '=' string unique",
+        
+        "tag_att": "attribute '=' (string | number)",
+        
+        "start_tag": "open_tag match (id_att | tag_att)* (close_open_tag | auto_close_open_tag nomatch)",
+        "end_tag": "close_tag matched",
+        
+        "tags": {
+            "type": "ngram",
+            "tokens": [
+                ["start_tag"], 
+                ["end_tag"]
+            ]
         },
         
-        // highlight url(...) as string regardless of quotes or not
-        "urlDeclaration" : {
-            "type" : "n-gram",
-            "tokens" : [ "url", "" /* match non-space */, "(", "stringOrUnquotedText", ")" ]
-        },
-        
-        "RHSAssignment" : {
-            "type" : "group",
-            "match" : "oneOrMore",
-            "tokens" : [ "urlDeclaration", "atom", "font", "standard", "string", "number", "hexcolor", "identifier", ",", "(", ")" ]
-        },
-        
-        "cssAssignment" : {
-            "type" : "group",
-            "match" : "all",
-            "tokens" : [ "property", ":", "RHSAssignment", ";" ]
-        },
-        
-        "cssAssignments" : {
-            "type" : "group",
-            "match" : "zeroOrMore",
-            "tokens" : [ "cssAssignment" ]
-        },
-        
-        // syntax grammar (n-gram) for a block of css assignments
-        "cssBlock" : {
-            "type" : "n-gram",
-            "tokens" : [
-                [ "{", "cssAssignments", "}" ]
+        "blocks": {
+            "type": "ngram",
+            "tokens": [
+                ["comment_block"],
+                ["cdata_block"],
+                ["meta_block"],
             ]
         }
     },
-
+    
     // what to parse and in what order
-    "Parser" : [
-        "comment",
-        "meta",
-        "meta2",
-        "urlDeclaration",
-        "element",
-        "cssID",
-        "cssClass",
-        "cssPseudoElement",
-        "cssBlock",
-        "number",
-        "hexcolor",
-        "string"
-    ]
+    "Parser": [ "blocks", "tags", "atom" ]
 };
 
 // 2. parse the grammar into a Prism-compatible syntax-highlighter
-var css_mode = PrismGrammar.getMode( css_grammar );
+var xml_mode = PrismGrammar.getMode( xml_grammar );
 
 // 3. use it with Prism for css language
-css_mode.hook( Prism, "css" );
+xml_mode.hook( Prism, "xml" );
 
 // mode can be unhooked also
-// css_mode.unhook();
+// xml_mode.unhook();
 
 ```
 
 
 Result:
 
-![css-grammar](/test/grammar-css.png)
+![xml-grammar](/test/grammar-xml.png)
 
 
 
 
 ###Other Examples:
 
+![css-grammar](/test/grammar-css.png)
+
 ![js-grammar](/test/grammar-js.png)
 
-![xml-grammar](/test/grammar-xml.png)
 

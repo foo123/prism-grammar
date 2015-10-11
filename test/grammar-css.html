@@ -35,7 +35,7 @@
     </head>
     <body>
         
-        <h3>Prism: Dynamic CSS Grammar</h3>
+        <h3>Prism (ver <span id="version">0</span>): Dynamic CSS Grammar</h3>
 
 <pre class="language-css line-numbers"><code id="code">/* Some example CSS */
 
@@ -76,6 +76,7 @@ code {
         <script>
         // <![CDATA[
         
+        document.getElementById('version').innerHTML = PrismGrammar.VERSION;
         var css_mode = PrismGrammar.getMode( css_grammar );
         css_mode.hook( Prism, "css" );
         Prism.highlightElement( document.getElementById('code') );

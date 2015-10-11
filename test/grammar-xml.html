@@ -35,14 +35,14 @@
     </head>
     <body>
         
-        <h3>Prism: Dynamic XML Grammar</h3>
+        <h3>Prism (ver <span id="version">0</span>): Dynamic XML Grammar</h3>
 
-<pre class="language-markup line-numbers"><code id="code">&lt;html style = "color: green">
+<pre class="language-markup line-numbers"><code id="code">&lt;html id="id1" style = "color: green">
     &lt;!-- this is a comment -->
-    &lt;head>
+    &lt;head id="id1">
         &lt;title>HTML Example&lt;/title>
     &lt;/head>
-    &lt;body>
+    &lt;body id="id1">
         &lt;!-- this is a 
             long comment -->
         &lt;div class="divclass">
@@ -53,7 +53,7 @@
         &lt;/div>
         The indentation tries to be &lt;em>somewhat &amp;quot;do what
         I mean&amp;quot;&lt;/em>... but might not match your style.
-    &lt;/body>
+    &lt;/bdy>
 &lt;/html></code></pre>
 
         <p></p>
@@ -61,6 +61,7 @@
         <script>
         // <![CDATA[
         
+        document.getElementById('version').innerHTML = PrismGrammar.VERSION;
         var xml_mode = PrismGrammar.getMode( xml_grammar );
         xml_mode.hook( Prism, "markup" );
         Prism.highlightElement( document.getElementById('code') );
