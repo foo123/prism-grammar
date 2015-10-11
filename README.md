@@ -3,7 +3,7 @@ prism-grammar
 
 __Transform a JSON grammar into a syntax-highlighter for Prism__
 
-A simple and light-weight (~ 20kB minified, ~ 8kB zipped) [Prism](https://github.com/LeaVerou/prism) plugin
+A simple and light-weight (~ 25kB minified, ~ 9kB zipped) [Prism](https://github.com/LeaVerou/prism) plugin
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
@@ -34,7 +34,7 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 * **`Grammar` specification can be minimal**, defaults will be used (see example grammars)
 * [`Grammar.Syntax Model`](/grammar-reference.md#syntax-model) can enable highlight in a more *context-specific* way, plus detect possible *syntax errors*
 * [`Grammar.Syntax Model`](/grammar-reference.md#syntax-model) can contain **recursive references**
-* [`Grammar.Syntax Model`](/grammar-reference.md#syntax-peg-bnf-like-notations) can be (fully) specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
+* [`Grammar.Syntax Model`](/grammar-reference.md#syntax-pegbnf-like-notations) can be (fully) specificed using [`PEG`](https://en.wikipedia.org/wiki/Parsing_expression_grammar)-like notation or [`BNF`](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form)-like notation  (**NEW feature**)
 * `Grammar` can define [*action* tokens](/grammar-reference.md#action-tokens) to perform *complex context-specific* parsing functionality, including **associated tag matching** and **duplicate identifiers** (see for example `xml.grammar` example) (**NEW feature**)
 * Generated highlighters are **optimized for speed and size**
 * Can generate a syntax-highlighter from a grammar **interactively and on-the-fly** ( see example, http://foo123.github.io/examples/prism-grammar )
