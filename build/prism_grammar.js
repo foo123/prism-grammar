@@ -2564,17 +2564,17 @@ var Parser = Class({
     // Prism compatible
     ,getLineTokens: function( line, state, row ) {
         
-        var self = this, i, rewind, rewind2, ci, tokenizer, action, 
+        var self = this, i, rewind, rewind2, ci, tokenizer, action, id,
             interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
-            prismTokens, token, type, style, pos, lin, 
+            prismTokens, token, type, style, pos, lin, cur, ACTIONERR,
             stream, stack, Style = self.Style, DEFAULT = self.DEF, ERR = self.ERR
         ;
         
         prismTokens = []; 
         stream = new Stream( line );
         stack = state.stack;
-        token = {type:null, content:""};
-        type = null; style = null;
+        token = {id:null, type:null, content:""};
+        type = null; style = null; id = null;
         
         // if EOL tokenizer is left on stack, pop it now
         if ( stream.sol() && !stack.isEmpty() && T_EOL === stack.peek().type ) 
@@ -2584,28 +2584,52 @@ var Parser = Class({
         
         lin = state.line;
         pos = stream.pos;
+        ACTIONERR = false;
         while ( !stream.eol() )
         {
             rewind = 0;
             
             if ( DEFAULT === style || ERR === style )
             {
-                if ( token.type ) prismTokens.push( token );
-                prismTokens.push( stream.cur(1) );
-                token = {type:null, content:""};
-                pos = stream.pos;
+                if ( id && ACTIONERR )
+                {
+                    cur = '';
+                    while ( prismTokens.length && id === prismTokens[prismTokens.length-1].id )
+                    {
+                        cur = prismTokens.pop().content + cur;
+                    }
+                    if ( id === token.id )
+                    {
+                        cur += token.content;
+                    }
+                    else if ( token.type )
+                    {
+                        prismTokens.push( token );
+                    }
+                    cur += stream.cur(1);
+                    prismTokens.push( cur );
+                }
+                else
+                {
+                    if ( token.type ) prismTokens.push( token );
+                    cur = stream.cur(1);
+                    prismTokens.push( cur );
+                }
+                token = {id:null, type:null, content:""};
             }
             else if ( style && style !== token.type )
             {
+                cur = stream.cur(1);
                 if ( token.type ) prismTokens.push( token );
-                token = {type:style, content:stream.cur(1)};
-                pos = stream.pos;
+                token = {id:id, type:style, content:cur};
             }
             else if ( token.type )
             {
-                token.content += stream.cur(1);
+                cur = stream.cur(1);
+                token.content += cur;
             }
-            style = false;
+            style = false; id = null;
+            ACTIONERR = false;
             
             // check for non-space tokenizer before parsing space
             if ( (stack.isEmpty() || (T_NONSPACE !== stack.peek().type)) && stream.spc() )
@@ -2616,6 +2640,7 @@ var Parser = Class({
             
             while ( !stack.isEmpty() && !stream.eol() )
             {
+                //ACTIONERR = false;
                 if ( interleavedCommentTokens )
                 {
                     ci = 0; rewind2 = 0;
@@ -2626,6 +2651,7 @@ var Parser = Class({
                         if ( false !== type )
                         {
                             style = Style[type] || DEFAULT;
+                            id = tokenizer.name;
                             rewind2 = 1;
                             break;
                         }
@@ -2668,6 +2694,7 @@ var Parser = Class({
                 else if ( true !== type )
                 {
                     style = Style[type] || DEFAULT;
+                    id = tokenizer.name;
                     // action token follows, execute action on current token
                     while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
                     {
@@ -2677,9 +2704,10 @@ var Parser = Class({
                         if ( action.status&ERROR )
                         {
                             // empty the stack
-                            stack.empty('$id', /*action*/tokenizer.$id);
+                            //stack.empty('$id', /*action*/tokenizer.$id);
                             // generate error
                             type = ERR; style = ERR;
+                            ACTIONERR = true;
                             //action.err(state, lin, pos, lin, stream.pos);
                             break;
                         }
@@ -2694,6 +2722,7 @@ var Parser = Class({
             
             for (i=0; i<numTokens; i++)
             {
+                //ACTIONERR = false;
                 pos = stream.pos;
                 tokenizer = tokens[i];
                 type = tokenizer.get(stream, state);
@@ -2725,6 +2754,7 @@ var Parser = Class({
                 else if ( true !== type )
                 {
                     style = Style[type] || DEFAULT;
+                    id = tokenizer.name;
                     // action token follows, execute action on current token
                     while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
                     {
@@ -2734,9 +2764,10 @@ var Parser = Class({
                         if ( action.status&ERROR )
                         {
                             // empty the stack
-                            stack.empty('$id', /*action*/tokenizer.$id);
+                            //stack.empty('$id', /*action*/tokenizer.$id);
                             // generate error
                             type = ERR; style = ERR;
+                            ACTIONERR = true;
                             //action.err(state, lin, pos, lin, stream.pos);
                             break;
                         }
@@ -2755,20 +2786,44 @@ var Parser = Class({
         
         if ( DEFAULT === style || ERR === style )
         {
-            if ( token.type ) prismTokens.push( token );
-            prismTokens.push( stream.cur(1) );
+            if ( id && ACTIONERR )
+            {
+                cur = '';
+                while ( prismTokens.length && id === prismTokens[prismTokens.length-1].id )
+                {
+                    cur = prismTokens.pop().content + cur;
+                }
+                if ( id === token.id )
+                {
+                    cur += token.content;
+                }
+                else if ( token.type )
+                {
+                    prismTokens.push( token );
+                }
+                cur += stream.cur(1);
+                prismTokens.push( cur );
+            }
+            else
+            {
+                if ( token.type ) prismTokens.push( token );
+                cur = stream.cur(1);
+                prismTokens.push( cur );
+            }
         }
         else if ( style && style !== token.type )
         {
+            cur = stream.cur(1);
             if ( token.type ) prismTokens.push( token );
-            prismTokens.push( {type:style, content:stream.cur(1)} );
+            prismTokens.push( {id:id, type:style, content:cur} );
         }
         else if ( token.type )
         {
-            token.content += stream.cur(1);
+            cur = stream.cur(1);
+            token.content += cur;
             prismTokens.push( token );
         }
-        token = null; //{ type: null, content: "" };
+        token = null; //{ id:null, type: null, content: "" };
         
         return {state:state, tokens:prismTokens};
     }
