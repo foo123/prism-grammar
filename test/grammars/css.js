@@ -2,30 +2,30 @@
 var css_grammar = {
     
     // prefix ID for regular expressions used in the grammar
-    "RegExpID" : "RegExp::",
+    "RegExpID" : "RE::",
 
     //
     // Style model
     "Style" : {
         // lang token type  -> Prism (style) tag
-        "comment":      "comment",
-        "meta":         "property",
-        "meta2":        "constant",
-        "atom":         "entity",
-        "property":     "property",
-        "element":      "atrule",
-        "url":          "url",
-        "operator":     "operator",
-        "font":         "entity",
-        "cssID":        "atrule",
-        "cssClass":     "atrule",
-        "cssPseudoElement": "selector",
-        "identifier":   "symbol",
-        "number":       "number",
-        "hexcolor":      "number",
-        "standard":      "important",
-        "string":       "string",
-        "text":         "string"
+        "comment"         : "comment",
+        "@atrule"         : "constant",
+        "@import"         : "constant",
+        "@keyframes"      : "constant",
+        "@media"          : "constant",
+        "identifier"      : "symbol",
+        "!important"      : "important",
+        "CssAtom"         : "entity",
+        "url"             : "url",
+        "format"          : "url",
+        "CssProperty"     : "property",
+        "HtmlElement"     : "atrule",
+        "CssID"           : "atrule",
+        "CssClass"        : "atrule",
+        "PseudoElement"   : "selector",
+        "number"          : "number",
+        "string"          : "string",
+        "text"            : "string"
     },
 
     
@@ -34,8 +34,8 @@ var css_grammar = {
     "Lex" : {
         
         // comments
-        "comment" : {
-            "type" : "comment",
+        "comment:comment" : {
+            "interleave": true,
             "tokens" : [
                 // block comments
                 // start, end     delims
@@ -43,184 +43,116 @@ var css_grammar = {
             ]
         },
         
-        // some standard identifiers
-        "font" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [
-                "arial", "tahoma", "courier"
-            ]
-        },
-        
-        "standard" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [
-                "!important", "only"
-            ]
-        },
-        
-        // css ids
-        "cssID" : "RegExp::/#[_A-Za-z][_A-Za-z0-9]*/",
-        
-        // css classes
-        "cssClass" : "RegExp::/\\.[_A-Za-z][_A-Za-z0-9]*/",
-        
-        "cssPseudoElement" : "RegExp::/::?[_A-Za-z][_A-Za-z0-9]*/",
-        
-        // general identifiers
-        "identifier" : "RegExp::/[_A-Za-z][_A-Za-z0-9]*/",
-        
         // numbers, in order of matching
         "number" : [
-            // floats
-            "RegExp::/\\d*\\.\\d+(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
-            "RegExp::/\\d+\\.\\d*(em|px|%|pt)?/",
-            "RegExp::/\\.\\d+(em|px|%|pt)?/",
             // integers
             // decimal
-            "RegExp::/[1-9]\\d*(e[\\+\\-]?\\d+)?(em|px|%|pt)?/",
-            // just zero
-            "RegExp::/0(?![\\dx])(em|px|%|pt)?/"
+            "RE::/[0-9]\\d*(rad|grad|deg|turn|vh|vw|vmin|vmax|px|rem|em|%|in|cm|mm|pc|pt|ex|s|ms)?/i",
+            // floats
+            "RE::/\\.\\d+(rad|grad|deg|turn|vh|vw|vmin|vmax|px|rem|em|%|in|cm|mm|pc|pt|ex|s|ms)?/i",
+            "RE::/\\d+\\.\\d*(rad|grad|deg|turn|vh|vw|vmin|vmax|px|rem|em|%|in|cm|mm|pc|pt|ex|s|ms)?/i",
+            "RE::/\\d*\\.\\d+(rad|grad|deg|turn|vh|vw|vmin|vmax|px|rem|em|%|in|cm|mm|pc|pt|ex|s|ms)?/i",
+            // hex color
+            "RE::/#[0-9a-f]{3,6}/i"
         ],
         
-        // hex colors
-        "hexcolor" : "RegExp::/#[0-9a-fA-F]+/",
-
         // strings
-        "string" : {
-            "type" : "escaped-block",
-            "escape" : "\\",
+        "string:block" : {
+            "multiline": false,
             "tokens" : [
                 //  start,           end of string (can be the matched regex group ie. 1 )
-                [ "RegExp::/([`'\"])/", 1 ]
+                [ "RE::/(['\"])/", 1 ]
             ]
         },
         
-        "text" : "RegExp::/[^\\(\\)\\[\\]\\{\\}'\"]+/",
+        "text" : "RE::/[^\\(\\)\\[\\]\\{\\}'\"]+/",
         
-        // operators
-        "operator" : {
-            "tokens" : [
-                "*", "+", ",", "=", ";", ">"
-            ]
-        },
+        // css identifier
+        "identifier" : "RE::/[a-z_\\-][a-z0-9_\\-]*/i",
         
-        // atoms
-        "atom" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "block", "none", "inherit", "inline-block", "inline", 
-                "relative", "absolute", "fixed", "static",
-                "sans-serif", "serif", "monospace", "bolder", "bold", 
-                "rgba", "rgb", "underline", "wrap"
-            ]
-        },
+        // css ids
+        "CssID" : "RE::/#[a-z_\\-][a-z0-9_\\-]*/i",
         
-        // meta
-        "meta" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ "screen",  "handheld" ]
-        },
-
-        // defs
-        "meta2" : "RegExp::/@[_A-Za-z][_A-Za-z0-9]*/",
-
+        // css classes
+        "CssClass" : "RE::/\\.[a-z_\\-][a-z0-9_\\-]*/i",
+        
+        // css pseudo classes / pseudo elements
+        "PseudoElement" : "RE::/::?[a-z_\\-][a-z0-9_\\-]*/i",
+        
         // css properties
-        "property" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "background-color", "background-image", "background-position", "background-repeat", "background", 
-                "font-family", "font-size", "font-weight", "font", 
-                "text-decoration", "text-align",
-                "margin-left", "margin-right", "margin-top", "margin-bottom", "margin", 
-                "padding-left", "padding-right", "padding-top", "padding-bottom", "padding", 
-                "border-left", "border-right", "border-top", "border-bottom", "border", 
-                "position", "display" , "content", "color"
-            ]
-        },
+        "CssProperty" : "RE::/[a-z_\\-][a-z0-9_\\-]*/i",
                               
-        // css html element
-        "element" : {
-            // enable autocompletion for these tokens, with their associated token ID
-            "autocomplete" : true,
-            "tokens" : [ 
-                "a", "p", "i",
-                "br", "hr",
-                "sup", "sub",
-                "img", "video", "audio", 
-                "canvas", "iframe",
-                "pre", "code",
-                "h1", "h2", "h3", "h4", "h5", "h6", 
-                "html", "body", 
-                "header", "footer", "nav",
-                "div", "span", "section", "strong",
-                "blockquote"
-            ]
-        },
+        // css atoms / values
+        "url" : "RE::/url\\b/i",
+        "format" : "RE::/format\\b/i",
+        "CssAtom" : "RE::/[a-z_\\-][a-z_\\-]*/i",
         
-        "url" : "RegExp::/url\\b/"
+        // css @atrules
+        "@import" : "RE::/@import\\b/i",
+        "@keyframes" : "RE::/@[a-z\\-]*keyframes\\b/i",
+        "@media" : "RE::/@media\\b/i",
+        "@atrule" : "RE::/@[a-z_\\-][a-z0-9_\\-]*/i",
+        
+        "!important" : "RE::/!important\\b/i",
+        
+        // css html element
+        "HtmlElement" : "RE::/[a-z_\\-][a-z0-9_\\-]*/i",
+        
+        "match:action" : {
+            "push": "$0"
+        },
+        "matched1:action" : {
+            "pop": "{",
+            "msg": "Token \"$0\" does not match"
+        },
+        "matched2:action" : {
+            "pop": "(",
+            "msg": "Token \"$0\" does not match"
+        }
     },
 
     //
     // Syntax model (optional)
     "Syntax" : {
         
-        "stringOrUnquotedText" : {
-            "type" : "group",
-            "match" : "either",
-            "tokens" : [ "string", "text" ]
-        },
+        "urlDeclaration:ngram" : "url '(' match (string | text) ')' matched2",
         
-        // highlight url(...) as string regardless of quotes or not
-        "urlDeclaration" : {
-            "type" : "n-gram",
-            "tokens" : [ "url", "" /* match non-space */, "(", "stringOrUnquotedText", ")" ]
-        },
+        "formatDeclaration:ngram" : "format '(' match (string | text) ')' matched2",
         
-        "RHSAssignment" : {
-            "type" : "group",
-            "match" : "oneOrMore",
-            "tokens" : [ "urlDeclaration", "atom", "font", "standard", "string", "number", "hexcolor", "identifier", ",", "(", ")" ]
-        },
+        "cssSelector" : "(HtmlElement | CssID | CssClass | PseudoElement | string | ',' | '(' match | ')' matched2 | '[' | ']' | '=' | '+' | '^' | '>' | '*' | '~')+",
         
-        "cssAssignment" : {
-            "type" : "group",
-            "match" : "all",
-            "tokens" : [ "property", ":", "RHSAssignment", ";" ]
-        },
+        "RHSAssignment" : "(!important | urlDeclaration | formatDeclaration | string | number | CssAtom | ',' | '(' match | ')' matched2)+",
         
-        "cssAssignments" : {
-            "type" : "group",
-            "match" : "zeroOrMore",
-            "tokens" : [ "cssAssignment" ]
-        },
+        "cssAssignment" : "CssProperty ':' RHSAssignment ';'*",
         
         // syntax grammar (n-gram) for a block of css assignments
-        "cssBlock" : {
-            "type" : "n-gram",
-            "tokens" : [
-                [ "{", "cssAssignments", "}" ]
-            ]
-        }
+        "cssBlock:ngram" : [
+            [ "number '{' match cssAssignment* '}' matched1" ],
+            [ "cssSelector '{' match cssAssignment* '}' matched1" ]
+        ],
+        
+        "@importDirective:ngram" : "@import urlDeclaration ';'",
+        
+        "@keyframesDirective:ngram" : "@keyframes identifier '{' match cssBlock* '}' matched1",
+        
+        "cssIdentifiers" : "(identifier | number | string | ',' | '(' match | ')' matched2)+",
+        
+        "@mediaDirective:ngram" : "@media cssIdentifiers '{' match cssBlock* '}' matched1",
+        
+        "atruleLine" : "cssIdentifiers ';'*",
+        
+        "atruleBlock" : "'{' match cssAssignments '}' matched1",
+        
+        "@atruleDirective:ngram"  : "@atrule (atruleBlock | atruleLine)"
     },
 
     // what to parse and in what order
     "Parser" : [
         "comment",
-        "meta",
-        "meta2",
-        "urlDeclaration",
-        "element",
-        "cssID",
-        "cssClass",
-        "cssPseudoElement",
-        "cssBlock",
-        "number",
-        "hexcolor",
-        "string"
+        "@importDirective",
+        "@keyframesDirective",
+        "@mediaDirective",
+        "@atruleDirective",
+        "cssBlock"
     ]
 };

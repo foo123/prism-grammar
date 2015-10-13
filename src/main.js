@@ -50,7 +50,7 @@ var Parser = Class({
         parse_errors = !!(parse_type&ERRORS);
         parse_tokens = !!(parse_type&TOKENS);
         
-        data = {state:new State(0, 0, parse_errors), tokens:null};
+        data = {state:new State(0, 0, parse_type), tokens:null};
         
         if ( parse_tokens )
         {
@@ -60,7 +60,7 @@ var Parser = Class({
                 data.state.line = i;
                 data = self.getLineTokens(lines[i], data.state, i);
                 tokens = tokens.concat(data.tokens);
-                if (i+1<l) tokens.push("\n");
+                if (i+1<l) tokens.push("\r\n");
             }
         }
         else //if ( parse_errors )
@@ -80,7 +80,6 @@ var Parser = Class({
     
     // Prism compatible
     ,getLineTokens: function( line, state, row ) {
-        
         var self = this, i, rewind, rewind2, ci, tokenizer, action, id,
             interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
             prismTokens, token, type, style, pos, lin, cur, ACTIONERR,
@@ -90,13 +89,15 @@ var Parser = Class({
         prismTokens = []; 
         stream = new Stream( line );
         stack = state.stack;
+        if ( 0 === state.line ) state.status |= T_SOF;
+        else state.status &= ~T_SOF;
         token = {id:null, type:null, content:""};
         type = null; style = null; id = null;
         
-        // if EOL tokenizer is left on stack, pop it now
-        if ( stream.sol() && !stack.isEmpty() && T_EOL === stack.peek().type ) 
+        if ( stream.sol() ) 
         {
-            stack.pop();
+            // if EOL tokenizer is left on stack, pop it now
+            while( !stack.isEmpty() && T_EOL === stack.peek().type ) stack.pop();
         }
         
         lin = state.line;
@@ -223,10 +224,9 @@ var Parser = Class({
                             // empty the stack
                             //stack.empty('$id', /*action*/tokenizer.$id);
                             // generate error
+                            //action.err(state, lin, pos, lin, stream.pos);
                             type = ERR; style = ERR;
                             ACTIONERR = true;
-                            //action.err(state, lin, pos, lin, stream.pos);
-                            //break;
                         }
                     }
                     rewind = 1;
@@ -239,7 +239,6 @@ var Parser = Class({
             
             for (i=0; i<numTokens; i++)
             {
-                //ACTIONERR = false;
                 pos = stream.pos;
                 tokenizer = tokens[i];
                 type = tokenizer.get(stream, state);
@@ -283,10 +282,9 @@ var Parser = Class({
                             // empty the stack
                             //stack.empty('$id', /*action*/tokenizer.$id);
                             // generate error
+                            //action.err(state, lin, pos, lin, stream.pos);
                             type = ERR; style = ERR;
                             ACTIONERR = true;
-                            //action.err(state, lin, pos, lin, stream.pos);
-                            //break;
                         }
                     }
                     rewind = 1;
