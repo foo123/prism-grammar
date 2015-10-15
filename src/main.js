@@ -16,27 +16,21 @@ DEFAULTERROR = "";
 var Parser = Class({
     constructor: function Parser( grammar, LOC ) {
         var self = this;
+        
+        self.$grammar = grammar;
         self.DEF = LOC.DEFAULT;
         self.ERR = LOC.ERROR;
-        
-        self.Tokens = grammar.Parser || [];
-        self.cTokens = grammar.cTokens.length ? grammar.cTokens : null;
-        self.Style = grammar.Style;
     }
     
-    ,ERR: null
+    ,$grammar: null
     ,DEF: null
-    ,cTokens: null
-    ,Tokens: null
-    ,Style: null
+    ,ERR: null
 
     ,dispose: function( ) {
         var self = this;
-        self.ERR = null;
+        self.$grammar = null;
         self.DEF = null;
-        self.cTokens = null;
-        self.Tokens = null;
-        self.Style = null;
+        self.ERR = null;
         return self;
     }
     
@@ -80,10 +74,10 @@ var Parser = Class({
     
     // Prism compatible
     ,getLineTokens: function( line, state, row ) {
-        var self = this, i, rewind, rewind2, ci, tokenizer, action, id,
-            interleavedCommentTokens = self.cTokens, tokens = self.Tokens, numTokens = tokens.length, 
-            prismTokens, token, type, style, pos, lin, cur, ACTIONERR,
-            stream, stack, Style = self.Style, DEFAULT = self.DEF, ERR = self.ERR
+        var self = this, grammar = self.$grammar, Style = grammar.Style, DEFAULT = self.DEF, ERR = self.ERR,
+            interleaved_comments = grammar.$interleaved, tokens = grammar.$parser, nTokens = tokens.length, 
+            i, rewind, rewind2, ci, tokenizer, action, id, prismTokens, 
+            token, type, style, pos, lin, cur, ACTIONERR, stream, stack
         ;
         
         prismTokens = []; 
@@ -159,12 +153,12 @@ var Parser = Class({
             while ( !stack.isEmpty() && !stream.eol() )
             {
                 //ACTIONERR = false;
-                if ( interleavedCommentTokens )
+                if ( interleaved_comments )
                 {
                     ci = 0; rewind2 = 0;
-                    while ( ci < interleavedCommentTokens.length )
+                    while ( ci < interleaved_comments.length )
                     {
-                        tokenizer = interleavedCommentTokens[ci++];
+                        tokenizer = interleaved_comments[ci++];
                         type = tokenizer.get(stream, state);
                         if ( false !== type )
                         {
@@ -237,7 +231,7 @@ var Parser = Class({
             if ( rewind ) continue;
             if ( stream.eol() ) break;
             
-            for (i=0; i<numTokens; i++)
+            for (i=0; i<nTokens; i++)
             {
                 pos = stream.pos;
                 tokenizer = tokens[i];
@@ -372,7 +366,7 @@ function get_mode( grammar )
                     env._code = "";
                     //env._highlightedCode = env.highlightedCode;
                     // tokenize code and transform to prism-compatible tokens
-                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code, TOKENS), env.language );
+                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code, TOKENS|ERRORS).tokens, env.language );
                 }
             }
         };
@@ -465,6 +459,20 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * This way arbitrary `dialects` and `variations` can be handled more easily
     [/DOC_MARKDOWN]**/
     extend: extend,
+    
+    // pre-process a grammar (in-place)
+    /**[DOC_MARKDOWN]
+    * __Method__: `pre_process`
+    *
+    * ```javascript
+    * PrismGrammar.pre_process( grammar );
+    * ```
+    *
+    * This is used internally by the `PrismGrammar` Class `parse` method
+    * In order to pre-process, in-place, a `JSON grammar` 
+    * to transform any shorthand configurations to full object configurations and provide defaults.
+    [/DOC_MARKDOWN]**/
+    pre_process: pre_process_grammar,
     
     // parse a grammar
     /**[DOC_MARKDOWN]
