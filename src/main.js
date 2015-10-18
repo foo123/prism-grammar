@@ -11,401 +11,133 @@
 
 //
 // parser factories
-DEFAULTSTYLE = "";
-DEFAULTERROR = "";
-var Parser = Class({
-    constructor: function Parser( grammar, LOC ) {
-        var self = this;
-        
-        self.$grammar = grammar;
-        self.DEF = LOC.DEFAULT;
-        self.ERR = LOC.ERROR;
+DEFAULTSTYLE = ""; DEFAULTERROR = "";
+var PrismParser = Class(Parser, {
+    constructor: function PrismParser( grammar, LOC ) {
+        Parser.call(this, grammar, LOC);
     }
     
-    ,$grammar: null
-    ,DEF: null
-    ,ERR: null
-
-    ,dispose: function( ) {
-        var self = this;
-        self.$grammar = null;
-        self.DEF = null;
-        self.ERR = null;
-        return self;
-    }
-    
-    // Prism compatible
-    ,parse: function( code, parse_type ) {
-        code = code || "";
-        var self = this, lines = code.split(newline_re), l = lines.length, i, 
-            tokens = null, data, parse_errors, parse_tokens, ret;
-        
-        parse_type = parse_type || TOKENS;
-        parse_errors = !!(parse_type&ERRORS);
-        parse_tokens = !!(parse_type&TOKENS);
-        
-        data = {state:new State(0, 0, parse_type), tokens:null};
-        
-        if ( parse_tokens )
-        {
-            tokens = [];
-            for (i=0; i<l; i++)
-            {
-                data.state.line = i;
-                data = self.getLineTokens(lines[i], data.state, i);
-                tokens = tokens.concat(data.tokens);
-                if (i+1<l) tokens.push("\r\n");
-            }
-        }
-        else //if ( parse_errors )
-        {
-            for (i=0; i<l; i++)
-            {
-                data.state.line = i;
-                data = self.getLineTokens(lines[i], data.state, i);
-            }
-        }
-        if ( parse_tokens && parse_errors ) ret = {tokens:tokens, errors:data.state.err};
-        else if ( parse_tokens ) ret = tokens;
-        else ret = data.state.err;
-        data.state.dispose();
-        return ret;
-    }
-    
-    // Prism compatible
-    ,getLineTokens: function( line, state, row ) {
-        var self = this, grammar = self.$grammar, Style = grammar.Style, DEFAULT = self.DEF, ERR = self.ERR,
-            interleaved_comments = grammar.$interleaved, tokens = grammar.$parser, nTokens = tokens.length, 
-            i, rewind, rewind2, ci, tokenizer, action, id, prismTokens, 
-            token, type, style, pos, lin, cur, ACTIONERR, stream, stack
+    ,tokenize: function( line, state, row ) {
+        var self = this, stream = new Stream( line ),
+            tokens = [], token, buf = [], id = null,
+            just_content = function( token ) { return token.content; },
+            maybe_content = function( token ) { return DEFAULTSTYLE === token.type ? token.content : token; }
         ;
-        
-        prismTokens = []; 
-        stream = new Stream( line );
-        stack = state.stack;
-        if ( 0 === state.line ) state.status |= T_SOF;
-        else state.status &= ~T_SOF;
-        token = {id:null, type:null, content:""};
-        type = null; style = null; id = null;
-        
-        // if EOL tokenizer is left on stack, pop it now
-        if ( stream.sol() && !stack.isEmpty() && T_EOL === stack.peek().type )
-        {
-            stack.pop();
-        }
-        
-        lin = state.line;
-        pos = stream.pos;
-        ACTIONERR = false;
+        //state.line = row || 0;
+        if ( stream.eol() ) state.line++;
         while ( !stream.eol() )
         {
-            rewind = 0;
-            
-            if ( DEFAULT === style || ERR === style )
+            token = self.token( stream, state );
+            if ( state.$actionerr$ )
             {
-                if ( id && ACTIONERR )
-                {
-                    cur = '';
-                    while ( prismTokens.length && id === prismTokens[prismTokens.length-1].id )
-                    {
-                        cur = prismTokens.pop().content + cur;
-                    }
-                    if ( id === token.id )
-                    {
-                        cur += token.content;
-                    }
-                    else if ( token.type )
-                    {
-                        prismTokens.push( token );
-                    }
-                    cur += stream.cur(1);
-                    prismTokens.push( cur );
-                }
-                else
-                {
-                    if ( token.type ) prismTokens.push( token );
-                    cur = stream.cur(1);
-                    prismTokens.push( cur );
-                }
-                token = {id:null, type:null, content:""};
-            }
-            else if ( style && style !== token.type )
-            {
-                cur = stream.cur(1);
-                if ( token.type ) prismTokens.push( token );
-                token = {id:id, type:style, content:cur};
-            }
-            else if ( token.type )
-            {
-                cur = stream.cur(1);
-                token.content += cur;
-            }
-            style = false; id = null;
-            ACTIONERR = false;
-            
-            // check for non-space tokenizer before parsing space
-            if ( (stack.isEmpty() || (T_NONSPACE !== stack.peek().type)) && stream.spc() )
-            {
-                type = DEFAULT; style = DEFAULT;
-                continue;
-            }
-            
-            while ( !stack.isEmpty() && !stream.eol() )
-            {
-                //ACTIONERR = false;
-                if ( interleaved_comments )
-                {
-                    ci = 0; rewind2 = 0;
-                    while ( ci < interleaved_comments.length )
-                    {
-                        tokenizer = interleaved_comments[ci++];
-                        type = tokenizer.get(stream, state);
-                        if ( false !== type )
-                        {
-                            style = Style[type] || DEFAULT;
-                            id = tokenizer.name;
-                            rewind2 = 1;
-                            break;
-                        }
-                    }
-                    if ( rewind2 )
-                    {
-                        rewind = 1;
-                        break;
-                    }
-                }
-            
-                pos = stream.pos;
-                tokenizer = stack.pop();
-                type = tokenizer.get(stream, state);
-            
-                // match failed
-                if ( false === type )
-                {
-                    // error
-                    if ( tokenizer.status&REQUIRED_OR_ERROR )
-                    {
-                        // empty the stack
-                        stack.empty('$id', tokenizer.$id);
-                        // skip this character
-                        stream.nxt();
-                        // generate error
-                        type = ERR; style = ERR;
-                        tokenizer.err(state, lin, pos, lin, stream.pos);
-                        rewind = 1;
-                        break;
-                    }
-                    // optional
-                    else
-                    {
-                        style = false;
-                        continue;
-                    }
-                }
-                // found token (not empty)
-                else if ( true !== type )
-                {
-                    style = Style[type] || DEFAULT;
-                    id = tokenizer.name;
-                    // action token follows, execute action on current token
-                    while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
-                    {
-                        action = stack.pop();
-                        action.get(stream, state);
-                        // action error
-                        if ( action.status&ERROR )
-                        {
-                            // empty the stack
-                            //stack.empty('$id', /*action*/tokenizer.$id);
-                            // generate error
-                            //action.err(state, lin, pos, lin, stream.pos);
-                            type = ERR; style = ERR;
-                            ACTIONERR = true;
-                        }
-                    }
-                    rewind = 1;
-                    break;
-                }
-            }
-            
-            if ( rewind ) continue;
-            if ( stream.eol() ) break;
-            
-            for (i=0; i<nTokens; i++)
-            {
-                pos = stream.pos;
-                tokenizer = tokens[i];
-                type = tokenizer.get(stream, state);
-                
-                // match failed
-                if ( false === type )
-                {
-                    // error
-                    if ( tokenizer.status&REQUIRED_OR_ERROR )
-                    {
-                        // empty the stack
-                        stack.empty('$id', tokenizer.$id);
-                        // skip this character
-                        stream.nxt();
-                        // generate error
-                        type = ERR; style = ERR;
-                        tokenizer.err(state, lin, pos, lin, stream.pos);
-                        rewind = 1;
-                        break;
-                    }
-                    // optional
-                    else
-                    {
-                        style = false;
-                        continue;
-                    }
-                }
-                // found token (not empty)
-                else if ( true !== type )
-                {
-                    style = Style[type] || DEFAULT;
-                    id = tokenizer.name;
-                    // action token follows, execute action on current token
-                    while ( !stack.isEmpty() && T_ACTION === stack.peek().type )
-                    {
-                        action = stack.pop();
-                        action.get(stream, state);
-                        // action error
-                        if ( action.status&ERROR )
-                        {
-                            // empty the stack
-                            //stack.empty('$id', /*action*/tokenizer.$id);
-                            // generate error
-                            //action.err(state, lin, pos, lin, stream.pos);
-                            type = ERR; style = ERR;
-                            ACTIONERR = true;
-                        }
-                    }
-                    rewind = 1;
-                    break;
-                }
-            }
-            
-            if ( rewind ) continue;
-            if ( stream.eol() ) break;
-            
-            // unknown, bypass
-            stream.nxt(); type = DEFAULT; style = DEFAULT;
-        }
-        
-        if ( DEFAULT === style || ERR === style )
-        {
-            if ( id && ACTIONERR )
-            {
-                cur = '';
-                while ( prismTokens.length && id === prismTokens[prismTokens.length-1].id )
-                {
-                    cur = prismTokens.pop().content + cur;
-                }
-                if ( id === token.id )
-                {
-                    cur += token.content;
-                }
-                else if ( token.type )
-                {
-                    prismTokens.push( token );
-                }
-                cur += stream.cur(1);
-                prismTokens.push( cur );
+                if ( buf.length ) tokens = tokens.concat( map( buf, just_content ) );
+                tokens.push( token.content );
+                buf.length = 0; id = null;
             }
             else
             {
-                if ( token.type ) prismTokens.push( token );
-                cur = stream.cur(1);
-                prismTokens.push( cur );
+                if ( id !== token.name )
+                {
+                    tokens = tokens.concat( map( buf, maybe_content ) );
+                    buf.length = 0; id = token.name;
+                }
+                buf.push( token );
             }
         }
-        else if ( style && style !== token.type )
-        {
-            cur = stream.cur(1);
-            if ( token.type ) prismTokens.push( token );
-            prismTokens.push( {id:id, type:style, content:cur} );
-        }
-        else if ( token.type )
-        {
-            cur = stream.cur(1);
-            token.content += cur;
-            prismTokens.push( token );
-        }
-        token = null; //{ id:null, type: null, content: "" };
-        
-        return {state:state, tokens:prismTokens};
+        if ( buf.length ) tokens = tokens.concat( map( buf, maybe_content ) );
+        buf.length = 0; id = null;
+        stream.dispose();
+        return tokens;
     }
 });
 
 function get_mode( grammar ) 
 {
-    var parser = new Parser( parse_grammar( grammar ), { 
+    var parser = new PrismParser(parse_grammar( grammar ), { 
             DEFAULT: DEFAULTSTYLE,
-            ERROR: DEFAULTERROR
-        }), _Prism, isHooked = 0, hookedLanguage = null, 
+            ERROR: DEFAULTERROR,
+            TYPE: 'type',
+            TOKEN: 'content'
+        }), 
         
-        thisHooks = {
+        prism_highlighter, is_hooked = 0,
+        
+        $Prism$,
+        
+        highlighter$ = {
             'before-highlight': function( env ) {
                 // use the custom parser for the grammar to highlight
                 // hook only if the language matches
-                if ( hookedLanguage === env.language )
+                if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
                 {
                     // avoid double highlight work, set code to ""
                     env._code = env.code;
                     env.code = "";
-                    //env.parser = parser;
                 }
             },
             
             'before-insert': function( env ) {
-                if ( hookedLanguage === env.language )
+                if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
                 {
                     // re-set
                     env.code = env._code;
                     env._code = "";
                     //env._highlightedCode = env.highlightedCode;
                     // tokenize code and transform to prism-compatible tokens
-                    env.highlightedCode = _Prism.Token.stringify( parser.parse(env.code, TOKENS|ERRORS).tokens, env.language );
+                    env.highlightedCode = $Prism$.Token.stringify( 
+                        prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens, 
+                    env.language );
                 }
             }
         };
     
     // return a plugin that can be hooked-unhooked to Prism under certain language conditions
-    return {
-        hook: function( Prism, language ) {
-            if ( !isHooked )
-            {
-                _Prism = Prism;
-                hookedLanguage = language;
-                for (var hookname in thisHooks )
-                {
-                    if ( thisHooks[HAS](hookname) )
-                        _Prism.hooks.add( hookname, thisHooks[hookname] );
-                }
-                isHooked = 1;
-            }
-        },
+    prism_highlighter = {
+        $id: uuid("prism_grammar_highlighter")
         
-        unhook: function( ) {
-            if ( isHooked )
+        ,$parser: parser
+        
+        ,$lang: null
+        
+        ,hook: function( Prism, language ) {
+            if ( is_hooked ) prism_highlighter.unhook();
+            $Prism$ = Prism;
+            prism_highlighter.$lang = language;
+            for (var hook in highlighter$ )
             {
-                var hooks = _Prism.hooks.all, hookname, thishook;
+                if ( highlighter$[HAS](hook) )
+                    $Prism$.hooks.add( hook, highlighter$[hook] );
+            }
+            is_hooked = 1;
+        }
+        
+        ,unhook: function( ) {
+            if ( is_hooked )
+            {
+                var prism_hooks = $Prism$.hooks.all, hook, this_hook;
                 
-                for (hookname in thisHooks)
+                for (hook in highlighter$)
                 {
-                    if ( hooks[HAS](hookname) && thisHooks[HAS](hookname) )
+                    if ( prism_hooks[HAS](hook) && highlighter$[HAS](hook) )
                     {
-                        thishook = hooks[hookname].indexOf( thisHooks[hookname] );
-                        if ( thishook > -1 ) hooks[hookname].splice(thishook, 1);
+                        this_hook = prism_hooks[hook].indexOf( highlighter$[hook] );
+                        if ( this_hook > -1 ) prism_hooks[hook].splice(this_hook, 1);
                     }
                 }
-                isHooked = 0;
-                hookedLanguage = null;
-                _Prism = null;
+                is_hooked = 0;
+                prism_highlighter.$lang = null;
+                $Prism$ = null;
             }
         }
+        
+        ,dispose: function( ) {
+            prism_highlighter.unhook();
+            if ( prism_highlighter.$parser ) prism_highlighter.$parser.dispose( );
+            prism_highlighter.$parser = null;
+            prism_highlighter.$lang = null;
+        }
     };
+    return prism_highlighter;
 }
 
 
