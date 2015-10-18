@@ -53,49 +53,45 @@ var PrismParser = Class(Parser, {
 
 function get_mode( grammar ) 
 {
-    var parser = new PrismParser(parse_grammar( grammar ), { 
-            DEFAULT: DEFAULTSTYLE,
-            ERROR: DEFAULTERROR,
-            TYPE: 'type',
-            TOKEN: 'content'
-        }), 
+    var prism_highlighter, is_hooked = 0, $Prism$,
         
-        prism_highlighter, is_hooked = 0,
-        
-        $Prism$,
-        
-        highlighter$ = {
-            'before-highlight': function( env ) {
-                // use the custom parser for the grammar to highlight
-                // hook only if the language matches
-                if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
-                {
-                    // avoid double highlight work, set code to ""
-                    env._code = env.code;
-                    env.code = "";
-                }
-            },
-            
-            'before-insert': function( env ) {
-                if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
-                {
-                    // re-set
-                    env.code = env._code;
-                    env._code = "";
-                    //env._highlightedCode = env.highlightedCode;
-                    // tokenize code and transform to prism-compatible tokens
-                    env.highlightedCode = $Prism$.Token.stringify( 
-                        prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens, 
-                    env.language );
-                }
+    highlighter$ = {
+        'before-highlight': function( env ) {
+            // use the custom parser for the grammar to highlight
+            // hook only if the language matches
+            if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
+            {
+                // avoid double highlight work, set code to ""
+                env._code = env.code;
+                env.code = "";
             }
-        };
+        },
+        
+        'before-insert': function( env ) {
+            if ( prism_highlighter.$parser && (prism_highlighter.$lang === env.language) )
+            {
+                // re-set
+                env.code = env._code;
+                env._code = "";
+                //env._highlightedCode = env.highlightedCode;
+                // tokenize code and transform to prism-compatible tokens
+                env.highlightedCode = $Prism$.Token.stringify( 
+                    prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens, 
+                env.language );
+            }
+        }
+    };
     
     // return a plugin that can be hooked-unhooked to Prism under certain language conditions
     prism_highlighter = {
         $id: uuid("prism_grammar_highlighter")
         
-        ,$parser: parser
+        ,$parser: new PrismParser(parse_grammar( grammar ), { 
+            DEFAULT: DEFAULTSTYLE,
+            ERROR: DEFAULTERROR,
+            TYPE: 'type',
+            TOKEN: 'content'
+        })
         
         ,$lang: null
         

@@ -2,11 +2,10 @@
 var js_grammar = {
         
     // prefix ID for regular expressions used in the grammar
-    "RegExpID" : "RegExp::",
+    "RegExpID": "RegExp::",
     
-    //
     // Style model
-    "Style" : {
+    "Style": {
         // lang token type  -> Prism (style) tag
         "comment":    "comment",
         "atom":       "entity",
@@ -21,11 +20,8 @@ var js_grammar = {
         "regex":      "regex"
     },
 
-    
-    //
     // Lexical model
-    "Lex" : {
-        
+    "Lex": {
         // comments
         "comment" : {
             "type" : "comment",
@@ -136,9 +132,8 @@ var js_grammar = {
         }
     },
     
-    //
     // Syntax model (optional)
-    "Syntax" : {
+    "Syntax": {
         
         "dotProperty" : {
             "type" : "group",
@@ -167,7 +162,7 @@ var js_grammar = {
     },
 
     // what to parse and in what order
-    "Parser" : [
+    "Parser": [
         "comment",
         "number",
         "string",
