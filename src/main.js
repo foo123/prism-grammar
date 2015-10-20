@@ -11,26 +11,28 @@
 
 //
 // parser factories
-DEFAULTSTYLE = ""; DEFAULTERROR = "";
 var PrismParser = Class(Parser, {
-    constructor: function PrismParser( grammar, LOC ) {
-        Parser.call(this, grammar, LOC);
+    constructor: function PrismParser( grammar, DEFAULT ) {
+        var self = this;
+        Parser.call(self, grammar, "", "");
+        self.$v$ = 'content';
+        self.DEF = DEFAULT || self.$DEF;
+        self.ERR = /*grammar.Style.error ||*/ self.$ERR;
     }
     
-    ,tokenize: function( line, state, row ) {
-        var self = this, stream = new Stream( line ),
-            tokens = [], token, buf = [], id = null,
-            just_content = function( token ) { return token.content; },
-            maybe_content = function( token ) { return DEFAULTSTYLE === token.type ? token.content : token; }
+    ,tokenize: function( stream, state, row ) {
+        var self = this, tokens = [], token, buf = [], id = null,
+            raw_content = function( token ) { return token.content; },
+            maybe_raw = function( token ) { return self.$DEF === token.type ? token.content : token; }
         ;
         //state.line = row || 0;
         if ( stream.eol() ) state.line++;
-        while ( !stream.eol() )
+        else while ( !stream.eol() )
         {
             token = self.token( stream, state );
             if ( state.$actionerr$ )
             {
-                if ( buf.length ) tokens = tokens.concat( map( buf, just_content ) );
+                if ( buf.length ) tokens = tokens.concat( map( buf, raw_content ) );
                 tokens.push( token.content );
                 buf.length = 0; id = null;
             }
@@ -38,15 +40,14 @@ var PrismParser = Class(Parser, {
             {
                 if ( id !== token.name )
                 {
-                    tokens = tokens.concat( map( buf, maybe_content ) );
+                    if ( buf.length ) tokens = tokens.concat( map( buf, maybe_raw ) );
                     buf.length = 0; id = token.name;
                 }
                 buf.push( token );
             }
         }
-        if ( buf.length ) tokens = tokens.concat( map( buf, maybe_content ) );
+        if ( buf.length ) tokens = tokens.concat( map( buf, maybe_raw ) );
         buf.length = 0; id = null;
-        stream.dispose();
         return tokens;
     }
 });
@@ -86,12 +87,7 @@ function get_mode( grammar )
     prism_highlighter = {
         $id: uuid("prism_grammar_highlighter")
         
-        ,$parser: new PrismParser(parse_grammar( grammar ), { 
-            DEFAULT: DEFAULTSTYLE,
-            ERROR: DEFAULTERROR,
-            TYPE: 'type',
-            TOKEN: 'content'
-        })
+        ,$parser: new PrismParser( parse_grammar( grammar ) )
         
         ,$lang: null
         
@@ -200,7 +196,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * In order to pre-process, in-place, a `JSON grammar` 
     * to transform any shorthand configurations to full object configurations and provide defaults.
     [/DOC_MARKDOWN]**/
-    pre_process: pre_process_grammar,
+    pre_process: preprocess_grammar,
     
     // parse a grammar
     /**[DOC_MARKDOWN]
