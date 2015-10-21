@@ -26,7 +26,7 @@ var PrismParser = Class(Parser, {
             maybe_raw = function( token ) { return self.$DEF === token.type ? token.content : token; }
         ;
         //state.line = row || 0;
-        if ( stream.eol() ) { state.line++; /*state.$eol$ = true;*/ }
+        if ( stream.eol() ) { state.line++; if ( state.$blank$ ) state.bline++; }
         else while ( !stream.eol() )
         {
             token = self.token( stream, state );
