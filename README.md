@@ -28,6 +28,8 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 
 ###Todo
 
+* add some options to customize highlighting (e.g whether to treat errors differently than non-styled)
+
 
 ###Features
 
