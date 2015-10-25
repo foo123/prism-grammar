@@ -13,10 +13,7 @@ var xml_grammar = {
     ,"comment"                      : "comment"
     ,"cdata"                        : "comment"
     ,"atom"                         : "string"
-    ,"open_tag"                     : "tag"
-    ,"close_open_tag"               : "tag"
-    ,"auto_close_open_tag"          : "tag"
-    ,"close_tag"                    : "tag"
+    ,"tag"                          : "tag"
     ,"attribute"                    : "attr-name"
     ,"number"                       : "number"
     // "" represents default style or unstyled
@@ -29,18 +26,18 @@ var xml_grammar = {
 // Lexical model
 "Lex"                               : {
      
-     "comment:comment"              : ["&lt;!--", "-->"]
-    ,"declaration:block"            : ["&lt;?xml", "?>"]
-    ,"doctype:block"                : ["RE::/&lt;!doctype\\b/i", ">"]
-    ,"meta:block"                   : ["RE::/&lt;\\?[_a-zA-Z][\\w\\._\\-]*/", "?>"]
-    ,"cdata:block"                  : ["&lt;![CDATA[", "]]>"]
-    ,"open_tag"                     : "RE::/&lt;([_a-zA-Z][_a-zA-Z0-9\\-]*)/"
-    ,"close_tag"                    : "RE::/&lt;\\/([_a-zA-Z][_a-zA-Z0-9\\-]*)>/"
+     "comment:comment"              : ["<!--", "-->"]
+    ,"declaration:block"            : ["<?xml", "?>"]
+    ,"doctype:block"                : ["RE::/<!doctype\\b/i", ">"]
+    ,"meta:block"                   : ["RE::/<\\?[_a-zA-Z][\\w\\._\\-]*/", "?>"]
+    ,"cdata:block"                  : ["<![CDATA[", "]]>"]
+    ,"open_tag"                     : "RE::/<([_a-zA-Z][_a-zA-Z0-9\\-]*)/"
+    ,"close_tag"                    : "RE::/<\\/([_a-zA-Z][_a-zA-Z0-9\\-]*)>/"
     ,"attribute"                    : "RE::/[_a-zA-Z][_a-zA-Z0-9\\-]*/"
     ,"string:line-block"            : [["\""], ["'"]]
     ,"number"                       : ["RE::/[0-9]\\d*/", "RE::/#[0-9a-fA-F]+/"]
-    ,"atom"                         : ["RE::/&amp;#x[a-fA-F\\d]+;/", "RE::/&amp;#[\\d]+;/", "RE::/&amp;[a-zA-Z][a-zA-Z0-9]*;/"]
-    ,"text"                         : "RE::/[^&]+/"
+    ,"atom"                         : ["RE::/&#x[a-fA-F\\d]+;/", "RE::/&#[\\d]+;/", "RE::/&[a-zA-Z][a-zA-Z0-9]*;/"]
+    ,"text"                         : "RE::/[^<&]+/"
     
     // actions
     ,"tag_ctx:action"               : {"context":true}
@@ -58,8 +55,8 @@ var xml_grammar = {
 "Syntax"                            : {
      
      "tag_att"                      : "'id'.attribute unique_att '=' string unique_id | attribute unique_att '=' (string | number)"
-    ,"start_tag"                    : "open_tag tag_ctx tag_opened tag_att* ('>'.tag | '/>'.tag tag_autoclosed) \\tag_ctx"
-    ,"end_tag"                      : "close_tag tag_closed"
+    ,"start_tag"                    : "open_tag.tag tag_ctx tag_opened tag_att* ('>'.tag | '/>'.tag tag_autoclosed) \\tag_ctx"
+    ,"end_tag"                      : "close_tag.tag tag_closed"
     ,"xml"                          : "(^^1 declaration? doctype?) (declaration.error out_of_place | doctype.error out_of_place | comment | meta | cdata | start_tag | end_tag | atom | text)*"
     
 },

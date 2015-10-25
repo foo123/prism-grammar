@@ -74,3 +74,15 @@ mode = PrismGrammar.getMode( grammar );
 
 This is the main method which transforms a `JSON grammar` into a syntax-highlighter for `Prism`.
     
+
+
+__Parser Class__: `Parser`
+
+```javascript
+Parser = PrismGrammar.Parser;
+```
+
+The Parser Class used to instantiate a highlight parser, is available.
+The `getMode` method will instantiate this parser class, which can be overriden/extended if needed, as needed.
+In general there is no need to override/extend the parser, unless you definately need to.
+    

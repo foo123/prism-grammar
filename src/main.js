@@ -5,6 +5,7 @@
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
+*   https://github.com/foo123/editor-grammar
 *
 **/
 
@@ -55,7 +56,12 @@ var PrismParser = Class(Parser, {
 function get_mode( grammar ) 
 {
     var prism_highlighter, is_hooked = 0, $Prism$,
-        
+    
+    esc_token = function( t ) {
+        if ( t.content ) t.content = esc_html( t.content, 1 );
+        else t = esc_html( t, 1 );
+        return t;
+    },
     highlighter$ = {
         'before-highlight': function( env ) {
             // use the custom parser for the grammar to highlight
@@ -74,11 +80,11 @@ function get_mode( grammar )
                 // re-set
                 env.code = env._code;
                 env._code = "";
-                //env._highlightedCode = env.highlightedCode;
                 // tokenize code and transform to prism-compatible tokens
-                env.highlightedCode = $Prism$.Token.stringify( 
-                    prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens, 
-                env.language );
+                var tokens = prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens;
+                // html-escape code
+                if ( prism_highlighter.escapeHtml ) tokens = map( tokens, esc_token );
+                env.highlightedCode = $Prism$.Token.stringify( tokens, env.language );
             }
         }
     };
@@ -87,9 +93,14 @@ function get_mode( grammar )
     prism_highlighter = {
         $id: uuid("prism_grammar_highlighter")
         
-        ,$parser: new PrismParser( parse_grammar( grammar ) )
+        ,$parser: new PrismGrammar.Parser( parse_grammar( grammar ) )
         
         ,$lang: null
+        ,escapeHtml: false
+        
+        // TODO:  a way to highlight in worker (like default prism async flag)
+        // post a request to prism repository?????
+        ,$async: false
         
         ,hook: function( Prism, language ) {
             if ( is_hooked ) prism_highlighter.unhook();
@@ -223,5 +234,19 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     *
     * This is the main method which transforms a `JSON grammar` into a syntax-highlighter for `Prism`.
     [/DOC_MARKDOWN]**/
-    getMode: get_mode
+    getMode: get_mode,
+    
+    // make Parser class available
+    /**[DOC_MARKDOWN]
+    * __Parser Class__: `Parser`
+    *
+    * ```javascript
+    * Parser = PrismGrammar.Parser;
+    * ```
+    *
+    * The Parser Class used to instantiate a highlight parser, is available.
+    * The `getMode` method will instantiate this parser class, which can be overriden/extended if needed, as needed.
+    * In general there is no need to override/extend the parser, unless you definately need to.
+    [/DOC_MARKDOWN]**/
+    Parser: PrismParser
 };

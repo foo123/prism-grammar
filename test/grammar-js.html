@@ -24,18 +24,20 @@
             }
             pre[class*="language"] {
                 overflow: scroll;
+                max-height: 50em;
             }
         </style>
         <script src="prism/prism.js" data-manual ></script>
         <script src="prism/plugins/line-numbers/prism-line-numbers.min.js"></script>
         <script src="../build/prism_grammar.js"></script>
         <script src="grammars/javascript.js"></script>
+        <script src="./demo.js"></script>
         
         <title>Prism: Dynamic JavaScript Grammar Demo</title>
     </head>
     <body>
         
-        <h3>Prism (ver <span id="version">0</span>): Dynamic JavaScript Grammar</h3>
+        <h3>Prism (v.<span id="editor-version">0</span>) Grammar (v.<span id="grammar-version">0</span>): Dynamic JavaScript Grammar</h3>
 
         
 <!--
@@ -138,12 +140,7 @@ getMode = function(grammar) {
 
         <script>
         // <![CDATA[
-        
-        document.getElementById('version').innerHTML = PrismGrammar.VERSION;
-        var js_mode = PrismGrammar.getMode( js_grammar );
-        js_mode.hook( Prism, "javascript" );
-        Prism.highlightElement( document.getElementById('code') );
-        
+        prism_grammar_demo(document.getElementById('code'), "javascript", js_grammar);
         // ]]>
         </script>
     </body>

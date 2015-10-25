@@ -5,6 +5,7 @@
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
+*   https://github.com/foo123/editor-grammar
 *
 **/!function( root, name, factory ) {
 "use strict";
@@ -48,14 +49,11 @@ TOKENS = 1, ERRORS = 2, FLAT = 32, REQUIRED = 4, ERROR = 8,
 CLEAR_REQUIRED = ~REQUIRED, CLEAR_ERROR = ~ERROR, REQUIRED_OR_ERROR = REQUIRED | ERROR,
 
 // action types
-A_ERROR = 4,
-A_INDENT = 8,
-A_OUTDENT = 16,
-A_CTXSTART = 32,
-A_CTXEND = 64,
-A_MCHSTART = 128,
-A_MCHEND = 256,
-A_UNIQUE = 512,
+A_ERROR = 4, A_UNIQUE = 8,
+A_CTXSTART = 16, A_CTXEND = 17,
+A_MCHSTART = 32, A_MCHEND = 33,
+A_FOLDSTART = 64, A_FOLDEND = 65, /*TODO*/
+A_INDENT = 128, A_OUTDENT = 129, /*TODO*/
 
 // pattern types
 P_SIMPLE = 2,
@@ -66,12 +64,13 @@ P_BLOCK = 8,
 T_ACTION = 4,
 T_SOF = 8, T_FNBL = 9, T_EOL = 16/*=T_NULL*/, T_SOL = 32, T_EOF = 64,
 T_EMPTY = 128, T_NONSPACE = 256,
+T_INDENTATION = 129, T_DEDENTATION = 130, /*TODO*/
 T_SIMPLE = 512,
 T_BLOCK = 1024, T_COMMENT = 1025,
 T_ALTERNATION = 2048,
 T_SEQUENCE = 4096,
 T_REPEATED = 8192, T_ZEROORONE = 8193, T_ZEROORMORE = 8194, T_ONEORMORE = 8195,
-T_LOOKAHEAD = 16384, T_POSITIVE_LOOKAHEAD = T_LOOKAHEAD, T_NEGATIVE_LOOKAHEAD = 16385, 
+T_LOOKAHEAD = 16384, T_POSITIVE_LOOKAHEAD = T_LOOKAHEAD, T_NEGATIVE_LOOKAHEAD = 16385, /*TODO*/
 T_NGRAM = 32768,
 T_SEQUENCE_OR_NGRAM = T_SEQUENCE|T_NGRAM,
 T_COMPOSITE = T_ALTERNATION|T_SEQUENCE|T_REPEATED|T_LOOKAHEAD|T_NGRAM,
@@ -488,9 +487,51 @@ function Class( O, C )
 //
 // tokenizer helpers
 var escaped_re = /([.*+?^${}()|[\]\/\\\-])/g,
+    html_special_re = /[&"'<>]/g,
     peg_bnf_special_re = /^([.!&\[\]{}()*+?\/|'"]|\s)/,
     default_combine_delimiter = "\\b", 
     combine_delimiter = "(\\s|\\W|$)" /* more flexible than \\b */;
+
+/*
+//html_ispecial_re = /&#(\d+);/g,
+function html_unescaper( m, c )
+{
+    return String.fromCharCode(parseInt(c,10));
+}
+function unesc_html( s )
+{
+    return s.replace(html_ispecial_re, html_unescaper);
+}
+*/
+
+function html_escaper_entities( c )
+{
+    return '&' === c
+        ? '&amp;'
+        :(
+        '<' === c
+        ? '&lt;'
+        : (
+        '>' === c
+        ? '&gt;'
+        : (
+        '"' === c
+        ? '&quot;'
+        : '&apos;'
+        )))
+    ;
+}
+
+function html_escaper( c )
+{
+    return "&#" + c.charCodeAt(0) + ";";
+}
+
+function esc_html( s, entities )
+{
+    return s.replace(html_special_re, entities ? html_escaper_entities : html_escaper);
+}
+
 
 function esc_re( s )
 {
@@ -618,7 +659,7 @@ function get_combined_re( tokens, boundary, case_insensitive )
 {
     var b = "", combined;
     if ( T_STR & get_type(boundary) ) b = boundary;
-    else b = combine_delimiter;
+    else if ( !!boundary ) b = combine_delimiter;
     combined = map( tokens.sort( by_length ), esc_re ).join( "|" );
     return [ new_re("^(" + combined + ")"+b, case_insensitive ? "i": ""), 1 ];
 }
@@ -652,7 +693,7 @@ function get_compositematcher( name, tokens, RegExpID, combined, caseInsensitive
     
     var tmp, i, l, l2, array_of_arrays = 0, 
         has_regexs = 0, is_char_list = 1, 
-        T1, T2, mtcher;
+        T1, T2, mtcher, combine = T_STR & get_type(combined) ? true : !!combined;
     
     tmp = make_array( tokens ); l = tmp.length;
     
@@ -687,13 +728,13 @@ function get_compositematcher( name, tokens, RegExpID, combined, caseInsensitive
             }
         }
         
-        if ( is_char_list && ( !combined /*|| !( T_STR & get_type(combined) )*/ ) )
+        if ( is_char_list && !combine )
         {
             tmp = tmp.slice().join('');
             tmp.isCharList = 1;
             mtcher = get_simplematcher( name, tmp, 0, cachedMatchers );
         }
-        else if ( combined && !(array_of_arrays || has_regexs) )
+        else if ( combine && !(array_of_arrays || has_regexs) )
         {   
             mtcher = get_simplematcher( name, get_combined_re( tmp, combined, caseInsensitive ), 0, cachedMatchers );
         }
@@ -2031,6 +2072,18 @@ function tokenizer( type, name, token, msg, modifier )
     self.$id = null;
 }
 
+function s_token( )
+{
+    var t = this;
+    t.T = 0;
+    t.id = null;
+    t.type = null;
+    t.match = null;
+    t.str = '';
+    t.pos = null;
+    t.block =  null;
+}
+
 function t_clone( t, required, modifier, $id )
 {
     var tt = new tokenizer( t.type, t.name, t.token, t.msg, t.modifier );
@@ -2131,7 +2184,7 @@ function t_action( a, stream, state, token )
         return false;
     }
 
-    else if ( A_INDENT === action )
+    /*else if ( A_INDENT === action )
     {
         // TODO
     }
@@ -2141,6 +2194,16 @@ function t_action( a, stream, state, token )
         // TODO
     }
 
+    else if ( A_FOLDSTART === action )
+    {
+        // TODO
+    }
+
+    else if ( A_FOLDEND === action )
+    {
+        // TODO
+    }*/
+
     else if ( A_CTXEND === action )
     {
         if ( ctx.length ) ctx.shift();
@@ -2149,35 +2212,6 @@ function t_action( a, stream, state, token )
     else if ( A_CTXSTART === action )
     {
         ctx.unshift({symb:{},queu:[]});
-    }
-
-    else if ( A_UNIQUE === action )
-    {
-        if ( in_ctx )
-        {
-            if ( ctx.length ) symb = ctx[0].symb;
-            else return true;
-        }
-        t0 = t[1]; ns = t[0];
-        t0 = group_replace( t0, t_str, true );
-        if ( case_insensitive ) t0 = t0[LOWER]();
-        if ( !symb[HAS](ns) ) symb[ns] = { };
-        if ( symb[ns][HAS](t0) )
-        {
-            // duplicate
-            self.$msg = msg
-                ? group_replace( msg, t0, true )
-                : 'Duplicate "'+t0+'"';
-            err = t_err( self );
-            error_( state, symb[ns][t0][0], symb[ns][t0][1], symb[ns][t0][2], symb[ns][t0][3], self, err );
-            error_( state, l1, c1, l2, c2, self, err );
-            self.status |= ERROR;
-            return false;
-        }
-        else
-        {
-            symb[ns][t0] = [l1, c1, l2, c2];
-        }
     }
 
     else if ( A_MCHEND === action )
@@ -2237,6 +2271,35 @@ function t_action( a, stream, state, token )
         t = group_replace( t, t_str );
         if ( case_insensitive ) t = t[LOWER]();
         queu.unshift( [t, l1, c1, l2, c2] );
+    }
+
+    else if ( A_UNIQUE === action )
+    {
+        if ( in_ctx )
+        {
+            if ( ctx.length ) symb = ctx[0].symb;
+            else return true;
+        }
+        t0 = t[1]; ns = t[0];
+        t0 = group_replace( t0, t_str, true );
+        if ( case_insensitive ) t0 = t0[LOWER]();
+        if ( !symb[HAS](ns) ) symb[ns] = { };
+        if ( symb[ns][HAS](t0) )
+        {
+            // duplicate
+            self.$msg = msg
+                ? group_replace( msg, t0, true )
+                : 'Duplicate "'+t0+'"';
+            err = t_err( self );
+            error_( state, symb[ns][t0][0], symb[ns][t0][1], symb[ns][t0][2], symb[ns][t0][3], self, err );
+            error_( state, l1, c1, l2, c2, self, err );
+            self.status |= ERROR;
+            return false;
+        }
+        else
+        {
+            symb[ns][t0] = [l1, c1, l2, c2];
+        }
     }
     return true;
 }
@@ -2530,8 +2593,8 @@ function t_composite( t, stream, state, token )
         do {
         tokenizer = t_clone( tokens[ i0++ ], is_sequence, modifier, $id );
         style = tokenize( tokenizer, stream, state, token );
-        // bypass failed but optional tokens in the sequence and get to then next ones
-        } while (is_sequence && i0 < n && false === style && !(tokenizer.status & REQUIRED_OR_ERROR));
+        // bypass failed but optional tokens in the sequence and get to the next ones
+        } while (/*is_sequence &&*/ i0 < n && false === style && !(tokenizer.status & REQUIRED_OR_ERROR));
         
         if ( false !== style )
         {
@@ -2816,7 +2879,12 @@ var Parser = Class({
         // state marks a new line
         if ( stream.sol() )
         {
-            if ( state.$eol$ ) { state.$eol$ = false; state.line++; }
+            if ( state.$eol$ )
+            {
+                // update count of blank lines at start of file
+                if ( state.$blank$ ) state.bline = state.line;
+                state.$eol$ = false; state.line++;
+            }
             state.$blank$ = state.bline+1 === state.line;
         }
         state.$actionerr$ = false;
@@ -2839,11 +2907,7 @@ var Parser = Class({
         T[$name$] = null; T[$type$] = DEFAULT; T[$value$] = null;
         if ( notfound )
         {
-            token = {
-                T:0, id:null, type:null,
-                match:null, str:'',
-                pos:null, block: null
-            };
+            token = new s_token( );
             
             i = 0;
             while ( notfound && (stack.length || i<nTokens) && !stream.eol() )
@@ -2873,7 +2937,7 @@ var Parser = Class({
                     if ( tokenizer.status & REQUIRED_OR_ERROR )
                     {
                         // empty the stack of the syntax rule group of this tokenizer
-                        empty( stack, tokenizer.$id );
+                        empty( stack, tokenizer.$id /*|| true*/ );
                         // skip this
                         if ( !stream.nxt( true ) ) { stream.spc( ); just_space = true; }
                         // generate error
@@ -2944,7 +3008,7 @@ var Parser = Class({
         state.$eol$ = stream.eol();
         state.$blank$ = state.$blank$ && (just_space || state.$eol$);
         // update count of blank lines at start of file
-        if ( state.$eol$ && state.$blank$ ) state.bline = state.line;
+        //if ( state.$eol$ && state.$blank$ ) state.bline = state.line;
         
         return T;
     }
@@ -3005,6 +3069,7 @@ var Parser = Class({
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
+*   https://github.com/foo123/editor-grammar
 *
 **/
 
@@ -3055,7 +3120,12 @@ var PrismParser = Class(Parser, {
 function get_mode( grammar ) 
 {
     var prism_highlighter, is_hooked = 0, $Prism$,
-        
+    
+    esc_token = function( t ) {
+        if ( t.content ) t.content = esc_html( t.content, 1 );
+        else t = esc_html( t, 1 );
+        return t;
+    },
     highlighter$ = {
         'before-highlight': function( env ) {
             // use the custom parser for the grammar to highlight
@@ -3074,11 +3144,11 @@ function get_mode( grammar )
                 // re-set
                 env.code = env._code;
                 env._code = "";
-                //env._highlightedCode = env.highlightedCode;
                 // tokenize code and transform to prism-compatible tokens
-                env.highlightedCode = $Prism$.Token.stringify( 
-                    prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens, 
-                env.language );
+                var tokens = prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens;
+                // html-escape code
+                if ( prism_highlighter.escapeHtml ) tokens = map( tokens, esc_token );
+                env.highlightedCode = $Prism$.Token.stringify( tokens, env.language );
             }
         }
     };
@@ -3087,9 +3157,14 @@ function get_mode( grammar )
     prism_highlighter = {
         $id: uuid("prism_grammar_highlighter")
         
-        ,$parser: new PrismParser( parse_grammar( grammar ) )
+        ,$parser: new PrismGrammar.Parser( parse_grammar( grammar ) )
         
         ,$lang: null
+        ,escapeHtml: false
+        
+        // TODO:  a way to highlight in worker (like default prism async flag)
+        // post a request to prism repository?????
+        ,$async: false
         
         ,hook: function( Prism, language ) {
             if ( is_hooked ) prism_highlighter.unhook();
@@ -3223,7 +3298,21 @@ var PrismGrammar = exports['PrismGrammar'] = {
     *
     * This is the main method which transforms a `JSON grammar` into a syntax-highlighter for `Prism`.
     [/DOC_MARKDOWN]**/
-    getMode: get_mode
+    getMode: get_mode,
+    
+    // make Parser class available
+    /**[DOC_MARKDOWN]
+    * __Parser Class__: `Parser`
+    *
+    * ```javascript
+    * Parser = PrismGrammar.Parser;
+    * ```
+    *
+    * The Parser Class used to instantiate a highlight parser, is available.
+    * The `getMode` method will instantiate this parser class, which can be overriden/extended if needed, as needed.
+    * In general there is no need to override/extend the parser, unless you definately need to.
+    [/DOC_MARKDOWN]**/
+    Parser: PrismParser
 };
 
 /* main code ends here */
