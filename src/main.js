@@ -57,10 +57,11 @@ function get_mode( grammar )
 {
     var prism_highlighter, is_hooked = 0, $Prism$,
     
-    esc_token = function( t ) {
+    esc_token = function( i, tokens ) {
+        var t = tokens[i];
         if ( t.content ) t.content = esc_html( t.content, 1 );
         else t = esc_html( t, 1 );
-        return t;
+        tokens[i] = t;
     },
     highlighter$ = {
         'before-highlight': function( env ) {
@@ -83,7 +84,7 @@ function get_mode( grammar )
                 // tokenize code and transform to prism-compatible tokens
                 var tokens = prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens;
                 // html-escape code
-                if ( prism_highlighter.escapeHtml ) tokens = map( tokens, esc_token );
+                if ( prism_highlighter.escapeHtml ) iterate( esc_token, 0, tokens.length-1, tokens );
                 env.highlightedCode = $Prism$.Token.stringify( tokens, env.language );
             }
         }
@@ -96,7 +97,8 @@ function get_mode( grammar )
         ,$parser: new PrismGrammar.Parser( parse_grammar( grammar ) )
         
         ,$lang: null
-        ,escapeHtml: false
+        // have escapeHtml flag true by default
+        ,escapeHtml: true
         
         // TODO:  a way to highlight in worker (like default prism async flag)
         // post a request to prism repository?????

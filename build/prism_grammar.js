@@ -1,7 +1,7 @@
 /**
 *
 *   PrismGrammar
-*   @version: 2.5.0
+*   @version: 2.6.0
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -36,7 +36,7 @@ else if ( !(name in root) )
 "use strict";
 /**
 *   EditorGrammar Codebase
-*   @version: 2.5.0
+*   @version: 2.6.0
 *
 *   https://github.com/foo123/editor-grammar
 **/
@@ -49,7 +49,7 @@ TOKENS = 1, ERRORS = 2, FLAT = 32, REQUIRED = 4, ERROR = 8,
 CLEAR_REQUIRED = ~REQUIRED, CLEAR_ERROR = ~ERROR, REQUIRED_OR_ERROR = REQUIRED | ERROR,
 
 // action types
-A_ERROR = 4, A_UNIQUE = 8,
+A_NOP = 0, A_ERROR = 4, A_UNIQUE = 8,
 A_CTXSTART = 16, A_CTXEND = 17,
 A_MCHSTART = 32, A_MCHEND = 33,
 A_FOLDSTART = 64, A_FOLDEND = 65, /*TODO*/
@@ -207,6 +207,7 @@ function operate( x, F, F0, i0, i1 )
     return Fv;
 }
 
+// http://jsperf.com/functional-loop-with-try-catch
 function iterate( F, i0, i1, F0 )
 {
     if ( i0 > i1 ) return F0;
@@ -363,7 +364,17 @@ function extend(/* var args here.. */)
     }
     return o;
 }
-    
+
+function TRUE( )
+{
+    return true;
+}
+
+function FALSE( )
+{
+    return false;
+}
+
 function make_array( a, force )
 {
     return ( force || T_ARRAY !== get_type( a ) ) ? [ a ] : a;
@@ -863,6 +874,11 @@ function preprocess_grammar( grammar )
                             G[id].type = 'action';
                             G[id].error = tok;
                         }
+                        else if ( 'nop' === type )
+                        {
+                            G[id].type = 'action';
+                            G[id].nop = true;
+                        }
                         else if ( 'group' === type )
                         {
                             G[id].type = 'sequence';
@@ -1014,6 +1030,12 @@ function preprocess_grammar( grammar )
                 tok.type = "simple";
                 tok.tokens = tok['simple'];
                 del(tok,'simple');
+            }
+            else if ( tok['nop'] )
+            {
+                tok.type = "action";
+                tok.action = [ 'nop', tok.nop, false ];
+                tok.nop = true;
             }
             else if ( tok['error'] )
             {
@@ -1737,7 +1759,8 @@ function get_tokenizer( tokenID, RegExpID, Lex, Syntax, Style,
     {
         if ( !token[HAS]('action') )
         {
-            if ( token[HAS]('error') ) token.action = [A_ERROR, token.error, !!token['in-context']];
+            if ( token[HAS]('nop') ) token.action = [A_NOP, token.nop, !!token['in-context']];
+            else if ( token[HAS]('error') ) token.action = [A_ERROR, token.error, !!token['in-context']];
             else if ( token[HAS]('context') ) token.action = [!!token.context?A_CTXSTART:A_CTXEND, token['context'], !!token['in-context']];
             else if ( token[HAS]('context-start') ) token.action = [A_CTXSTART, token['context-start'], !!token['in-context']];
             else if ( token[HAS]('context-end') ) token.action = [A_CTXEND, token['context-end'], !!token['in-context']];
@@ -1749,7 +1772,8 @@ function get_tokenizer( tokenID, RegExpID, Lex, Syntax, Style,
         }
         else
         {
-            if ( 'error' === token.action[0] ) token.action[0] = A_ERROR;
+            if ( 'nop' === token.action[0] ) token.action[0] = A_NOP;
+            else if ( 'error' === token.action[0] ) token.action[0] = A_ERROR;
             else if ( 'context-start' === token.action[0] ) token.action[0] = A_CTXSTART;
             else if ( 'context-end' === token.action[0] ) token.action[0] = A_CTXEND;
             else if ( 'push' === token.action[0] ) token.action[0] = A_MCHSTART;
@@ -1758,6 +1782,8 @@ function get_tokenizer( tokenID, RegExpID, Lex, Syntax, Style,
             else if ( 'indent' === token.action[0] ) token.action[0] = A_INDENT;
             else if ( 'outdent' === token.action[0] ) token.action[0] = A_OUTDENT;
         }
+        // NOP action, no action
+        if ( token.nop ) token.action[0] = A_NOP;
         $token$ = new tokenizer( T_ACTION, tokenID, token.action.slice(), $msg$, $modifier$ );
         $token$.ci = !!token.caseInsensitive||token.ci;
         // pre-cache tokenizer to handle recursive calls to same tokenizer
@@ -1876,10 +1902,42 @@ function get_tokenizer( tokenID, RegExpID, Lex, Syntax, Style,
     return cachedTokens[ tokenID ];
 }
 
+function get_block_types( grammar, the_styles )
+{
+    var Style = grammar.Style, Lex = grammar.Lex, Syntax = grammar.Syntax, t, T,
+        blocks = [], visited = {};
+    for (t in Style )
+    {
+        if ( !Style[HAS](t) ) continue;
+        T = Lex[t] || Syntax[t];
+        if ( T && ('block' == T.type || 'comment' === T.type) )
+        {
+            if ( the_styles && (Style[ t+'.inside' ]||Style[ t ]) )
+            {
+                t = Style[ t+'.inside' ] || Style[ t ];
+                if ( !visited[HAS](t) )
+                {
+                    blocks.push( t );
+                    visited[t] = 1;
+                }
+            }
+            else if ( !the_styles )
+            {
+                if ( !visited[HAS](t) )
+                {
+                    blocks.push( t );
+                    visited[t] = 1;
+                }
+            }
+        }
+    }
+    return blocks;
+}
+
 function parse_grammar( grammar ) 
 {
     var RegExpID, tokens,
-        Extra, Style, Lex, Syntax, 
+        Extra, Style, Fold, Lex, Syntax, 
         cachedRegexes, cachedMatchers, cachedTokens, 
         interleavedTokens, comments, keywords;
     
@@ -1890,6 +1948,7 @@ function parse_grammar( grammar )
     RegExpID = grammar.RegExpID || null;
     Extra = grammar.Extra ? clone(grammar.Extra) : { };
     Style = grammar.Style ? clone(grammar.Style) : { };
+    Fold = /*grammar.Fold ||*/ null;
     Lex = grammar.Lex ? clone(grammar.Lex) : { };
     Syntax = grammar.Syntax ? clone(grammar.Syntax) : { };
     
@@ -1900,6 +1959,7 @@ function parse_grammar( grammar )
     
     grammar = preprocess_grammar({
         Style           : Style,
+        Fold            : Fold,
         Lex             : Lex,
         Syntax          : Syntax,
         $parser         : null,
@@ -2156,8 +2216,8 @@ function t_action( a, stream, state, token )
     // do action only if state.status handles (action) errors, else dont clutter
     if ( no_errors || !action_def || !token || !token.pos ) return true;
     is_block = !!(T_BLOCK & token.T);
-    // partial block not completed yet, postpone
-    if ( is_block && !token.block ) return true;
+    // NOP action, return OR partial block not completed yet, postpone
+    if ( A_NOP === action_def[ 0 ] || is_block && !token.block ) return true;
 
     action = action_def[ 0 ]; t = action_def[ 1 ]; in_ctx = action_def[ 2 ];
     msg = self.msg; queu = state.queu; symb = state.symb; ctx = state.ctx;
@@ -2681,8 +2741,7 @@ function t_composite( t, stream, state, token )
 }
 
 
-//
-// parser factory
+
 function State( unique, s )
 {
     var self = this;
@@ -2846,15 +2905,18 @@ Stream.$RE_SPC$ = /^[\s\u00a0]+/;
 Stream.$RE_NONSPC$ = /[^\s\u00a0]/;
 
 
+// parser factories
 var Parser = Class({
     constructor: function Parser( grammar, DEFAULT, ERROR ) {
         var self = this;
         self.$grammar = grammar;
         self.$DEF = DEFAULT || null; self.$ERR = ERROR || null;
         self.DEF = self.$DEF; self.ERR = self.$ERR;
+        self.$folders = [];
     }
     
     ,$grammar: null
+    ,$folders: null
     ,$n$: 'name', $t$: 'type', $v$: 'token'
     ,$DEF: null, $ERR: null
     ,DEF: null, ERR: null
@@ -2862,6 +2924,7 @@ var Parser = Class({
     ,dispose: function( ) {
         var self = this;
         self.$grammar = null;
+        self.$folders = null;
         self.$n$ = self.$t$ = self.$v$ = null;
         self.$DEF = self.$ERR = self.DEF = self.ERR = null;
         return self;
@@ -3058,14 +3121,366 @@ var Parser = Class({
         state_dispose( state );
         return ret;
     }
-    
+
+    // overriden
+    ,iterator: function( ) { }
+    ,validate: function( ) { }
+    ,autocomplete: function( ) { }
     ,indent: function( ) { }
+    ,fold: function( ) { }
 });
+
+function Type( TYPE, positive )
+{
+    if ( T_STR_OR_ARRAY & get_type( TYPE ) )
+        TYPE = new RegExp( map( make_array( TYPE ).sort( by_length ), esc_re ).join( '|' ) );
+    return false === positive
+    ? function( type ) { return !TYPE.test( type ); }
+    : function( type ) { return TYPE.test( type ); };
+}
+
+// Counts the column offset in a string, taking tabs into account.
+// Used mostly to find indentation.
+// adapted from codemirror countColumn
+function count_column( string, end, tabSize, startIndex, startValue )
+{
+    var i, n, nextTab;
+    if ( null == end )
+    {
+        end = string.search(/[^\s\u00a0]/);
+        if ( -1 == end ) end = string.length;
+    }
+    for (i=startIndex||0,n=startValue||0 ;;)
+    {
+        nextTab = string.indexOf("\t", i);
+        if ( nextTab < 0 || nextTab >= end ) return n + (end - i);
+        n += nextTab - i;
+        n += tabSize - (n % tabSize);
+        i = nextTab + 1;
+    }
+}
+
+function next_tag( iter, T, M, L, R, S )
+{
+    for (;;)
+    {
+        M.lastIndex = iter.col;
+        var found = M.exec( iter.text );
+        if ( !found )
+        {
+            if ( iter.next( ) )
+            {
+                iter.text = iter.line( iter.row );
+                continue;
+            }
+            else return;
+        }
+        if ( !tag_at(iter, found.index+1, T) )
+        {
+            iter.col = found.index + 1;
+            continue;
+        }
+        iter.col = found.index + found[0].length;
+        return found;
+    }
+}
+/*
+function prev_tag( iter, T, M, L, R, S )
+{
+    for (;;)
+    {
+        var gt = iter.col ? iter.text.lastIndexOf( R, iter.col-1 ) : -1;
+        if ( -1 == gt )
+        {
+            if ( iter.prev( ) )
+            {
+                iter.text = iter.line( iter.row );
+                continue;
+            }
+            else return;
+        }
+        if ( !tag_at(iter, gt+1, T) )
+        {
+            iter.col = gt;
+            continue;
+        }
+        var lastSlash = iter.text.lastIndexOf( S, gt );
+        var selfClose = lastSlash > -1 && !/\S/.test(iter.text.slice(lastSlash + 1, gt));
+        iter.col = gt + 1;
+        return selfClose ? "autoclosed" : "regular";
+    }
+}
+*/
+function tag_end( iter, T, M, L, R, S )
+{
+    var gt, lastSlash, selfClose;
+    for (;;)
+    {
+        gt = iter.text.indexOf( R, iter.col );
+        if ( -1 == gt )
+        {
+            if ( iter.next( ) )
+            {
+                iter.text = iter.line(  iter.row );
+                continue;
+            }
+            else return;
+        }
+        if ( !tag_at(iter, gt + 1, T) )
+        {
+            iter.col = gt + 1;
+            continue;
+        }
+        lastSlash = iter.text.lastIndexOf( S, gt );
+        selfClose = lastSlash > -1 && !/\S/.test(iter.text.slice(lastSlash + 1, gt));
+        iter.col = gt + 1;
+        return selfClose ? "autoclosed" : "regular";
+    }
+}
+
+function tag_start( iter, T, M, L, R, S )
+{
+    var lt, match;
+    for (;;)
+    {
+        lt = iter.col ? iter.text.lastIndexOf( L, iter.col-1 ) : -1;
+        if ( -1 == lt )
+        {
+            if ( iter.prev( ) )
+            {
+                iter.text = iter.line( iter.row );
+                continue;
+            }
+            else return;
+        }
+        if ( !tag_at(iter, lt + 1, T) )
+        {
+            iter.col = lt;
+            continue;
+        }
+        M.lastIndex = lt;
+        iter.col = lt;
+        match = M.exec( iter.text );
+        if ( match && match.index == lt ) return match;
+    }
+}
+
+function tag_at( iter, ch, T )
+{
+    var type = iter.token(iter.row, ch);
+    return type && T( type );
+}
+
+
+function find_matching_close( iter, tag, T, M, L, R, S )
+{
+    var stack = [], next, end, startLine, startCh, i;
+    for (;;)
+    {
+        next = next_tag(iter, T, M, L, R, S);
+        startLine = iter.row; startCh = iter.col - (next ? next[0].length : 0);
+        if ( !next || !(end = tag_end(iter, T, M, L, R, S)) ) return;
+        if ( end == "autoclosed" ) continue;
+        if ( next[1] )
+        {
+            // closing tag
+            for (i=stack.length-1; i>=0; --i)
+            {
+                if ( stack[i] == next[2] )
+                {
+                    stack.length = i;
+                    break;
+                }
+            }
+            if ( i < 0 && (!tag || tag == next[2]) )
+                return {
+                    tag: next[2],
+                    pos: [startLine, startCh, iter.row, iter.col]
+                };
+        }
+        else
+        {
+            // opening tag
+            stack.push( next[2] );
+        }
+    }
+}
+/*
+function find_matching_open( iter, tag, T, M, L, R, S )
+{
+    var stack = [], prev, endLine, endCh, start, i;
+    for (;;)
+    {
+        prev = prev_tag(iter, T, M, L, R, S);
+        if ( !prev ) return;
+        if ( prev == "autoclosed" )
+        {
+            tag_start(iter, T, M, L, R, S);
+            continue;
+        }
+        endLine = iter.row, endCh = iter.col;
+        start = tag_start(iter, T, M, L, R, S);
+        if ( !start ) return;
+        if ( start[1] )
+        {
+            // closing tag
+            stack.push( start[2] );
+        }
+        else
+        {
+            // opening tag
+            for (i = stack.length-1; i>=0; --i)
+            {
+                if ( stack[i] == start[2] )
+                {
+                    stack.length = i;
+                    break;
+                }
+            }
+            if ( i < 0 && (!tag || tag == start[2]) )
+                return {
+                    tag: start[2],
+                    pos: [iter.row, iter.col, endLine, endCh]
+                };
+        }
+    }
+}
+*/
+
+// folder factories
+var Folder = {
+    // adapted from codemirror
+    
+     _: {
+        $notempty$: /\S/,
+        $spc$: /^\s*/,
+        $block$: /comment/,
+        $comment$: /comment/
+    }
+    
+    ,Indented: function( NOTEMPTY ) {
+        NOTEMPTY = NOTEMPTY || Folder._.$notempty$;
+        
+        return function( iter ) {
+            var first_line, first_indentation, cur_line, cur_indentation,
+                start_pos, end_pos, last_line_in_fold, i, end,
+                row = iter.row, col = iter.col;
+            
+            first_line = iter.line( );
+            if ( !NOTEMPTY.test( first_line ) ) return;
+            first_indentation = iter.indentation( first_line );
+            last_line_in_fold = null; start_pos = first_line.length;
+            for (i=row+1,end=iter.last( ); i<=end; ++i)
+            {
+                cur_line = iter.line( i ); cur_indentation = iter.indentation( cur_line );
+                if ( cur_indentation > first_indentation )
+                {
+                    // Lines with a greater indent are considered part of the block.
+                    last_line_in_fold = i;
+                    end_pos = cur_line.length;
+                }
+                else if ( !NOTEMPTY.test( cur_line ) )
+                {
+                    // Empty lines might be breaks within the block we're trying to fold.
+                }
+                else
+                {
+                    // A non-empty line at an indent equal to or less than ours marks the
+                    // start of another block.
+                    break;
+                }
+            }
+            // return a range
+            if ( last_line_in_fold ) return [row, start_pos, last_line_in_fold, end_pos];
+        };
+    }
+
+    ,Delimited: function( S, E, T ) {
+        if ( !S || !E ) return function( ){ };
+        T = T || TRUE;
+
+        return function( iter ) {
+            var line = iter.row, col = iter.col,
+                lineText, startCh, at, pass, found,
+                depth, lastLine, end, endCh, i, text, pos, nextOpen, nextClose;
+            
+            lineText = iter.line( line );
+            for (at=col,pass=0 ;;)
+            {
+                var found = at<=0 ? -1 : lineText.lastIndexOf( S, at-1 );
+                if ( -1 == found )
+                {
+                    if ( 1 == pass ) return;
+                    pass = 1;
+                    at = lineText.length;
+                    continue;
+                }
+                if ( 1 == pass && found < col ) return;
+                if ( T( iter.token( line, found+1 ) ) )
+                {
+                    startCh = found + S.length;
+                    break;
+                }
+                at = found-1;
+            }
+            depth = 1; lastLine = iter.last();
+            outer: for (i=line; i<=lastLine; ++i)
+            {
+                text = iter.line( i ); pos = i==line ? startCh : 0;
+                for (;;)
+                {
+                    nextOpen = text.indexOf( S, pos );
+                    nextClose = text.indexOf( E, pos );
+                    if ( nextOpen < 0 ) nextOpen = text.length;
+                    if ( nextClose < 0 ) nextClose = text.length;
+                    pos = MIN( nextOpen, nextClose );
+                    if ( pos == text.length ) break;
+                    if ( pos == nextOpen ) ++depth;
+                    else if ( !--depth ) { end = i; endCh = pos; break outer; }
+                    ++pos;
+                }
+            }
+            if ( null == end || (line === end && endCh === startCh) ) return;
+            return [line, startCh, end, endCh];
+        };
+    }
+    
+    ,Pattern: function( S, E, T ) {
+        // TODO
+        return function( ){ };
+    }
+    
+    ,Markup: function( T, L, R, S, M ) {
+        T = T || Type(/\btag\b/);
+        L = L || "<"; R = R || ">"; S = S || "/";
+        M = M || new RegExp(L+"("+S+"?)([a-zA-Z_][a-zA-Z0-9_\\-:]*)","g");
+
+        return function( iter ) {
+            iter.col = 0; iter.min = iter.first( ); iter.max = iter.last( );
+            iter.text = iter.line( iter.row );
+            var openTag, end, start, close, startLine = iter.row;
+            for (;;)
+            {
+                openTag = next_tag(iter, T, M, L, R, S);
+                if ( !openTag || iter.row != startLine || !(end = tag_end(iter, T, M, L, R, S)) ) return;
+                if ( !openTag[1] && end != "autoclosed" )
+                {
+                    start = [iter.row, iter.col];
+                    if ( close = find_matching_close(iter, openTag[2], T, M, L, R, S) )
+                    {
+                        return [start[0], start[1], close.pos[0], close.pos[1]];
+                    }
+                }
+            }
+        };
+    }
+
+};
 
 /**
 *
 *   PrismGrammar
-*   @version: 2.5.0
+*   @version: 2.6.0
 *
 *   Transform a grammar specification in JSON format, into a syntax-highlighter for Prism
 *   https://github.com/foo123/prism-grammar
@@ -3121,10 +3536,11 @@ function get_mode( grammar )
 {
     var prism_highlighter, is_hooked = 0, $Prism$,
     
-    esc_token = function( t ) {
+    esc_token = function( i, tokens ) {
+        var t = tokens[i];
         if ( t.content ) t.content = esc_html( t.content, 1 );
         else t = esc_html( t, 1 );
-        return t;
+        tokens[i] = t;
     },
     highlighter$ = {
         'before-highlight': function( env ) {
@@ -3147,7 +3563,7 @@ function get_mode( grammar )
                 // tokenize code and transform to prism-compatible tokens
                 var tokens = prism_highlighter.$parser.parse(env.code, TOKENS|ERRORS|FLAT).tokens;
                 // html-escape code
-                if ( prism_highlighter.escapeHtml ) tokens = map( tokens, esc_token );
+                if ( prism_highlighter.escapeHtml ) iterate( esc_token, 0, tokens.length-1, tokens );
                 env.highlightedCode = $Prism$.Token.stringify( tokens, env.language );
             }
         }
@@ -3160,7 +3576,8 @@ function get_mode( grammar )
         ,$parser: new PrismGrammar.Parser( parse_grammar( grammar ) )
         
         ,$lang: null
-        ,escapeHtml: false
+        // have escapeHtml flag true by default
+        ,escapeHtml: true
         
         // TODO:  a way to highlight in worker (like default prism async flag)
         // post a request to prism repository?????
@@ -3229,7 +3646,7 @@ function get_mode( grammar )
 [/DOC_MARKDOWN]**/
 var PrismGrammar = exports['PrismGrammar'] = {
     
-    VERSION: "2.5.0",
+    VERSION: "2.6.0",
     
     // clone a grammar
     /**[DOC_MARKDOWN]
