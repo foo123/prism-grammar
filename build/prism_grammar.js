@@ -2184,7 +2184,7 @@ function t_err( t )
 function error_( state, l1, c1, l2, c2, t, err )
 {
     //if ( state.err )
-    state.err[ l1+'_'+c1+'_'+l2+'_'+c2+'_'+t.name ] = [ l1, c1, l2, c2, err || t_err( t ) ];
+    state.err[ l1+'_'+c1+'_'+l2+'_'+c2+'_'+(t?t.name:'ERROR') ] = [ l1, c1, l2, c2, err || t_err( t ) ];
     //return state;
 }
 
@@ -2330,7 +2330,12 @@ function t_action( a, stream, state, token )
         }
         t = group_replace( t, t_str );
         if ( case_insensitive ) t = t[LOWER]();
-        queu.unshift( [t, l1, c1, l2, c2] );
+        self.$msg = msg
+            ? group_replace( msg, t, true )
+            : 'Token does not match "'+t+'"';
+        // used when end-of-file is reached and unmatched tokens exist in the queue
+        // to generate error message, if needed, as needed
+        queu.unshift( [t, l1, c1, l2, c2, t_err( self )] );
     }
 
     else if ( A_UNIQUE === action )
@@ -3109,7 +3114,7 @@ var Parser = Class({
     
     ,parse: function( code, parse_type ) {
         var self = this, lines = (code||"").split(newline_re), l = lines.length,
-            linetokens = null, state, parse_errors, parse_tokens, ret;
+            linetokens = null, state, parse_errors, parse_tokens, err, ret;
         
         parse_type = parse_type || TOKENS;
         parse_errors = !!(parse_type & ERRORS);
@@ -3136,6 +3141,17 @@ var Parser = Class({
                 if ( stream.eol() ) { state.line++; if ( state.$blank$ ) state.bline++; }
                 else while ( !stream.eol() ) self.token( stream, state );
             }, 0, l-1);
+        
+        
+        if ( parse_errors && state.queu && state.queu.length )
+        {
+            // generate errors for unmatched tokens, if needed
+            while( state.queu.length )
+            {
+                err = state.queu.shift( );
+                error_( state, err[1], err[2], err[3], err[4], null, err[5] );
+            }
+        }
         
         ret = parse_tokens && parse_errors
             ? {tokens:linetokens, errors:state.err}
