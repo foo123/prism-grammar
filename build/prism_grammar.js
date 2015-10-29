@@ -3224,16 +3224,19 @@ var PrismParser = Class(Parser, {
     }
 });
 
-function get_mode( grammar ) 
+
+function esc_token( i, tokens )
 {
-    var prism_highlighter, is_hooked = 0, $Prism$,
+    var t = tokens[i];
+    if ( t.content ) t.content = esc_html( t.content, 1 );
+    else t = esc_html( t, 1 );
+    tokens[i] = t;
+}
+
+function get_mode( grammar, Prism ) 
+{
+    var prism_highlighter, is_hooked = 0, $Prism$ = Prism,
     
-    esc_token = function( i, tokens ) {
-        var t = tokens[i];
-        if ( t.content ) t.content = esc_html( t.content, 1 );
-        else t = esc_html( t, 1 );
-        tokens[i] = t;
-    },
     highlighter$ = {
         'before-highlight': function( env ) {
             // use the custom parser for the grammar to highlight
@@ -3268,6 +3271,7 @@ function get_mode( grammar )
         ,$parser: new PrismGrammar.Parser( parse_grammar( grammar ) )
         
         ,$lang: null
+        
         // have escapeHtml flag true by default
         ,escapeHtml: true
         
@@ -3275,9 +3279,16 @@ function get_mode( grammar )
         // post a request to prism repository?????
         ,$async: false
         
-        ,hook: function( Prism, language ) {
+        ,hook: function( language, Prism ) {
             if ( is_hooked ) prism_highlighter.unhook();
-            $Prism$ = Prism;
+            if ( T_STR & get_type(Prism) )
+            {
+                // arguments given in different order
+                var tmp = language;
+                language = Prism;
+                Prism = tmp;
+            }
+            $Prism$ = Prism || $Prism$;
             prism_highlighter.$lang = language;
             for (var hook in highlighter$ )
             {

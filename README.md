@@ -128,8 +128,8 @@ var xml_mode = PrismGrammar.getMode( xml_grammar );
 // output escaped html code, to work properly (Prism.version 1.2.0+)
 xml_mode.escapeHtml = true;
 
-// 3. use it with Prism for
-xml_mode.hook( Prism, "xml" );
+// 3. use it with Prism
+xml_mode.hook( "xml", Prism );
 
 // mode can be unhooked also
 // xml_mode.unhook();
