@@ -126,9 +126,9 @@ var xml_grammar = {
 var xml_mode = PrismGrammar.getMode( xml_grammar );
 
 // output escaped html code, to work properly (Prism.version 1.2.0+)
-xml_mode.ecapeHtml = true;
+xml_mode.escapeHtml = true;
 
-// 3. use it with Prism for css language
+// 3. use it with Prism for
 xml_mode.hook( Prism, "xml" );
 
 // mode can be unhooked also
