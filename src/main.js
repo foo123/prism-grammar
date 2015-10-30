@@ -166,7 +166,7 @@ function get_mode( grammar, Prism )
 * __For node:__
 *
 * ```javascript
-* PrismGrammar = require('build/prism_grammar.js').PrismGrammar;
+* PrismGrammar = require('build/prism_grammar.js');
 * ```
 *
 * __For browser:__
@@ -185,7 +185,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * __Method__: `clone`
     *
     * ```javascript
-    * cloned = PrismGrammar.clone( grammar [, deep=true] );
+    * cloned_grammar = PrismGrammar.clone( grammar [, deep=true] );
     * ```
     *
     * Clone (deep) a `grammar`
@@ -199,7 +199,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * __Method__: `extend`
     *
     * ```javascript
-    * extendedgrammar = PrismGrammar.extend( grammar, basegrammar1 [, basegrammar2, ..] );
+    * extended_grammar = PrismGrammar.extend( grammar, basegrammar1 [, basegrammar2, ..] );
     * ```
     *
     * Extend a `grammar` with `basegrammar1`, `basegrammar2`, etc..
@@ -213,21 +213,21 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     * __Method__: `pre_process`
     *
     * ```javascript
-    * PrismGrammar.pre_process( grammar );
+    * pre_processed_grammar = PrismGrammar.pre_process( grammar );
     * ```
     *
     * This is used internally by the `PrismGrammar` Class `parse` method
-    * In order to pre-process, in-place, a `JSON grammar` 
-    * to transform any shorthand configurations to full object configurations and provide defaults.
+    * In order to pre-process a `JSON grammar` (in-place) to transform any shorthand configurations to full object configurations and provide defaults.
+    * It also parses `PEG`/`BNF` (syntax) notations into full (syntax) configuration objects, so merging with other grammars can be easier if needed.
     [/DOC_MARKDOWN]**/
-    pre_process: preprocess_grammar,
+    pre_process: preprocess_and_parse_grammar,
     
     // parse a grammar
     /**[DOC_MARKDOWN]
     * __Method__: `parse`
     *
     * ```javascript
-    * parsedgrammar = PrismGrammar.parse( grammar );
+    * parsed_grammar = PrismGrammar.parse( grammar );
     * ```
     *
     * This is used internally by the `PrismGrammar` Class

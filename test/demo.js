@@ -1,4 +1,4 @@
-function prism_grammar_demo(code, lang, grammar, escapeHtml)
+function prism_grammar_demo(code, lang, grammar)
 {
     document.getElementById('editor-version').innerHTML = '1.2.0';
     document.getElementById('grammar-version').innerHTML = PrismGrammar.VERSION;
