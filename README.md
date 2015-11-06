@@ -7,7 +7,7 @@ A simple and light-weight (~ 31kB minified, ~ 11kB zipped) [Prism](https://githu
 
 to generate prism-compatible syntax-highlighters from a grammar specification in JSON format.
 
-See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , [ace-grammar](https://github.com/foo123/ace-grammar)
+See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , [ace-grammar](https://github.com/foo123/ace-grammar), [syntaxhighlighter-grammar](https://github.com/foo123/syntaxhighlighter-grammar)
 
 **Note:** The invariant codebase for all the `*-grammar` add-ons resides at [editor-grammar](https://github.com/foo123/editor-grammar) repository (used as a `git submodule`)
 

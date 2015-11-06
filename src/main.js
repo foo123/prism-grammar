@@ -237,7 +237,7 @@ var PrismGrammar = exports['@@MODULE_NAME@@'] = {
     [/DOC_MARKDOWN]**/
     parse: parse_grammar,
     
-    // get an ACE-compatible syntax-highlight mode from a grammar
+    // get a Prism-compatible syntax-highlighter from a grammar
     /**[DOC_MARKDOWN]
     * __Method__: `getMode`
     *
