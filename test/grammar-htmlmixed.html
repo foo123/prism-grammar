@@ -10,10 +10,7 @@
         <style type="text/css">
             body {
                 position: relative;
-            }
-            pre {
-                max-height: 30em;
-                overflow: auto;
+                overflow: scroll;
             }
             pre > code.highlight {
                 outline: .4em solid red;
@@ -23,13 +20,15 @@
                 overflow: visible;
             }
             pre[class*="language"] {
-                overflow: scroll;
-                max-height: 50em;
+                overflow: visible;
+                max-height: 2500px;
             }
         </style>
         <script src="prism/prism.js" data-manual ></script>
         <script src="prism/plugins/line-numbers/prism-line-numbers.min.js"></script>
         <script src="../build/prism_grammar.js"></script>
+        <script src="grammars/javascript.js"></script>
+        <script src="grammars/css.js"></script>
         <script src="grammars/htmlmixed.js"></script>
         <script src="./demo.js"></script>
         
@@ -87,7 +86,11 @@ var bar = { foo: [1, 2, 3, {"foo3":"foo4"}],
 
         <script>
         // <![CDATA[
-        prism_grammar_demo(document.getElementById('code'), "markup", htmlmixed_grammar);
+        prism_grammar_demo(document.getElementById('code'), [
+             {language: "markup", grammar: htmlmixed_grammar}
+            ,{language: "javascript", grammar: js_grammar}
+            ,{language: "css", grammar: css_grammar}
+        ]);
         // ]]>
         </script>
     </body>

@@ -140,7 +140,9 @@ getMode = function(grammar) {
 
         <script>
         // <![CDATA[
-        prism_grammar_demo(document.getElementById('code'), "javascript", js_grammar);
+        prism_grammar_demo(document.getElementById('code'), [
+            {language: "javascript", grammar: js_grammar}
+        ]);
         // ]]>
         </script>
     </body>

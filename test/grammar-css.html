@@ -77,7 +77,9 @@ code {
 
         <script>
         // <![CDATA[
-        prism_grammar_demo(document.getElementById('code'), "css", css_grammar);
+        prism_grammar_demo(document.getElementById('code'), [
+            {language: "css", grammar: css_grammar}
+        ]);
         // ]]>
         </script>
     </body>

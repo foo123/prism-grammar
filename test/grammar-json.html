@@ -119,7 +119,9 @@
 
         <script>
         // <![CDATA[
-        prism_grammar_demo(document.getElementById('code'), "json", json_grammar);
+        prism_grammar_demo(document.getElementById('code'), [
+            {language: "json", grammar: json_grammar}
+        ]);
         // ]]>
         </script>
     </body>

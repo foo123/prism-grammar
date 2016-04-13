@@ -65,7 +65,9 @@
 
         <script>
         // <![CDATA[
-        prism_grammar_demo(document.getElementById('code'), "markup", xml_grammar);
+        prism_grammar_demo(document.getElementById('code'), [
+            {language: "markup", grammar: xml_grammar}
+        ]);
         // ]]>
         </script>
     </body>
