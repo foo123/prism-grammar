@@ -303,7 +303,7 @@ function get_mode( grammar, Prism )
 * ```
 *
 [/DOC_MARKDOWN]**/
-var PrismGrammar = exports['@@MODULE_NAME@@'] = {
+var PrismGrammar = {
     
     VERSION: "@@VERSION@@",
     
