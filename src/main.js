@@ -58,11 +58,12 @@ var PrismParser = Class(Parser, {
         self.ERR = /*grammar.Style.error ||*/ self.$ERR;
     }
     
-    ,tokenize: function( stream, mode, row ) {
-        var self = this, tokens = [], token, buf = [], id = null,
+    ,tokenize: function( stream, mode, row, tokens ) {
+        var self = this, token, buf = [], id = null, push = Array.prototype.push,
             raw_content = function( token ) { return token.content; },
             maybe_raw = function( token ) { return self.$DEF === token.type ? token.content : token; }
         ;
+        tokens = tokens || [];
         //mode.state.line = row || 0;
         if ( stream.eol() ) { mode.state.line++; if ( mode.state.$blank$ ) mode.state.bline++; }
         else while ( !stream.eol() )
@@ -70,7 +71,7 @@ var PrismParser = Class(Parser, {
             token = mode.parser.get( stream, mode );
             if ( mode.state.$actionerr$ )
             {
-                if ( buf.length ) tokens = tokens.concat( map( buf, raw_content ) );
+                if ( buf.length ) push.apply( tokens, map( buf, raw_content ) );
                 tokens.push( token.content );
                 buf.length = 0; id = null;
             }
@@ -78,13 +79,13 @@ var PrismParser = Class(Parser, {
             {
                 if ( id !== token.name )
                 {
-                    if ( buf.length ) tokens = tokens.concat( map( buf, maybe_raw ) );
+                    if ( buf.length ) push.apply( tokens, map( buf, maybe_raw ) );
                     buf.length = 0; id = token.name;
                 }
                 buf.push( token );
             }
         }
-        if ( buf.length ) tokens = tokens.concat( map( buf, maybe_raw ) );
+        if ( buf.length ) push.apply( tokens, map( buf, maybe_raw ) );
         buf.length = 0; id = null;
         return tokens;
     }
