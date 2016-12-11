@@ -233,7 +233,7 @@ function get_mode( grammar, Prism )
             self.language = language;
             for (var hook in highlighter$ )
             {
-                if ( highlighter$[HAS](hook) )
+                if ( HAS.call(highlighter$,hook) )
                     Prism.hooks.add( hook, highlighter$[hook] );
             }
             is_hooked = 1;
@@ -248,7 +248,7 @@ function get_mode( grammar, Prism )
                 
                 for (hook in highlighter$)
                 {
-                    if ( prism_hooks[HAS](hook) && highlighter$[HAS](hook) )
+                    if ( HAS.call(prism_hooks,hook) && HAS.call(highlighter$,hook) )
                     {
                         this_hook = prism_hooks[hook].indexOf( highlighter$[hook] );
                         if ( this_hook > -1 ) prism_hooks[hook].splice(this_hook, 1);
