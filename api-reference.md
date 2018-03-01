@@ -1,6 +1,6 @@
 
 
-###PrismGrammar Methods
+### PrismGrammar Methods
 
 __For node:__
 

@@ -15,7 +15,7 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 **Note:** The invariant codebase for all the `*-grammar` add-ons resides at [editor-grammar](https://github.com/foo123/editor-grammar) repository (used as a `git submodule`)
 
 
-###Contents
+### Contents
 
 * [Live Playground Example](http://foo123.github.io/examples/prism-grammar)
 * [Todo](#todo)
@@ -29,7 +29,7 @@ See also:  [codemirror-grammar](https://github.com/foo123/codemirror-grammar) , 
 [![Build your own syntax-highlight mode on the fly](/test/screenshot.png)](http://foo123.github.io/examples/prism-grammar)
 
 
-###Todo
+### Todo
 
 see [Modularity and Future Directions](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#modularity-and-future-directions)
 
@@ -37,7 +37,7 @@ see [Modularity and Future Directions](https://github.com/foo123/editor-grammar/
 * enable grammar add-on to pre-compile a grammar specification directly into mode source code, so it can be used without the add-on as standalone mode [TODO, maybe]
 
 
-###Features
+### Features
 
 * A [`Grammar`](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md) can **extend other `Grammars`** (so arbitrary `variations` and `dialects` can be handled more easily)
 * `Grammar` includes: [`Style Model`](/https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#style-model) , [`Lex Model`](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#lexical-model) and [`Syntax Model` (optional)](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#syntax-model), plus a couple of [*settings*](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#extra-settings) (see examples)
@@ -53,7 +53,7 @@ see [Modularity and Future Directions](https://github.com/foo123/editor-grammar/
 * see also [Modularity and Future Directions](https://github.com/foo123/editor-grammar/blob/master/grammar-reference.md#modularity-and-future-directions)
 
 
-###How to use:
+### How to use:
 
 An example for XML:
 
@@ -147,7 +147,7 @@ Result:
 ![xml-grammar](/test/grammar-xml.png)
 
 
-###Other Examples:
+### Other Examples:
 
 ![htmlmixed-grammar](/test/grammar-htmlmixed.png)
 
